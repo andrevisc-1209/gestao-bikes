@@ -52,7 +52,10 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
     });
   }, [bikes, search]);
 
-  async function handleDeactivate(bikeId: string) {
+  async function handleDeactivate(bike: FleetBike) {
+    const bikeId = bike.id;
+    if (!window.confirm(`Dar baixa na bike #${bike.tag_number}? Isso libera a vaga.`)) return;
+
     setDeactivatingId(bikeId);
     setDeactivateError(null);
     const { error } = await supabase.from('bikes').update({ status: 'inactive' }).eq('id', bikeId);
@@ -170,7 +173,7 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                       <div>
                         <button
                           type="button"
-                          onClick={() => handleDeactivate(bike.id)}
+                          onClick={() => handleDeactivate(bike)}
                           disabled={deactivatingId === bike.id}
                           className="w-full text-center text-rose-600 font-semibold text-xs py-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 transition-colors disabled:opacity-50"
                         >
@@ -244,7 +247,7 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                             <div className="flex flex-col items-end gap-1">
                               <button
                                 type="button"
-                                onClick={() => handleDeactivate(bike.id)}
+                                onClick={() => handleDeactivate(bike)}
                                 disabled={deactivatingId === bike.id}
                                 className="text-slate-400 hover:text-rose-600 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors disabled:opacity-50"
                               >

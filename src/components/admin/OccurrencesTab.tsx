@@ -41,6 +41,8 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
   }, []);
 
   async function handleResolve(id: string) {
+    if (!window.confirm('Marcar esta ocorrência como resolvida?')) return;
+
     setResolvingId(id);
     await supabase
       .from('incidents')
