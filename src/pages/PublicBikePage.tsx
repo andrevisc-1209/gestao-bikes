@@ -15,7 +15,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { compressAndUpload } from '../lib/imageCompression';
 import { INCIDENT_REASONS } from '../lib/reasons';
-import { buildWhatsappPreview } from '../lib/whatsapp';
+import { buildWhatsappPreview, type WhatsappPreviewData } from '../lib/whatsapp';
 import type { PublicBike } from '../types/database';
 
 const REASON_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -39,7 +39,7 @@ function PublicBikePage() {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [whatsappPreview, setWhatsappPreview] = useState<string | null>(null);
+  const [whatsappPreview, setWhatsappPreview] = useState<WhatsappPreviewData | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -172,10 +172,22 @@ function PublicBikePage() {
       <div className="max-w-md mx-auto p-5">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
           <h2 className="font-bold text-slate-800 text-sm mb-3">Notificação enviada</h2>
-          <div
-            className="text-xs text-slate-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3.5"
-            dangerouslySetInnerHTML={{ __html: whatsappPreview }}
-          />
+          <div className="text-xs text-slate-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
+            <p>
+              Olá, <strong>{whatsappPreview.ownerFirstName}</strong>! Sua bicicleta elétrica{' '}
+              <strong>{whatsappPreview.tag}</strong> ({whatsappPreview.model}) recebeu uma
+              notificação colaborativa no bicicletário:
+            </p>
+            <p className="mt-2">
+              📌 <strong>Motivo:</strong> {whatsappPreview.reason}
+            </p>
+            {whatsappPreview.note && (
+              <p className="mt-2">
+                💬 <strong>Obs.:</strong> &quot;{whatsappPreview.note}&quot;
+              </p>
+            )}
+            <p className="mt-2">Por favor, verifique assim que possível. Obrigado pela colaboração!</p>
+          </div>
         </div>
       </div>
     );
