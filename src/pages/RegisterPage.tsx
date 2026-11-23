@@ -37,6 +37,9 @@ const BRAND_MODELS: Record<string, string[]> = {
 
 const BRAND_OPTIONS = [...Object.keys(BRAND_MODELS), OTHER_BRAND];
 
+const OTHER_COLOR = 'Outra cor';
+const COLOR_OPTIONS = ['Preta', 'Branca', 'Prata', 'Vermelha', 'Azul', 'Verde', 'Amarela', 'Cinza', OTHER_COLOR];
+
 function RegisterPage() {
   const [block, setBlock] = useState(BLOCK_OPTIONS[0]);
   const [apartment, setApartment] = useState('');
@@ -46,7 +49,8 @@ function RegisterPage() {
   const [model, setModel] = useState(BRAND_MODELS[BRAND_OPTIONS[0]][0]);
   const [customBrand, setCustomBrand] = useState('');
   const [customModel, setCustomModel] = useState('');
-  const [color, setColor] = useState('');
+  const [color, setColor] = useState(COLOR_OPTIONS[0]);
+  const [customColor, setCustomColor] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -72,6 +76,9 @@ function RegisterPage() {
     ? customBrand.trim()
     : `${brand} ${isOtherModel ? customModel.trim() : model}`.trim();
 
+  const isOtherColor = color === OTHER_COLOR;
+  const finalColor = isOtherColor ? customColor.trim() : color;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -95,7 +102,7 @@ function RegisterPage() {
       owner_name: ownerName.trim(),
       owner_whatsapp: whatsapp.trim(),
       brand_model: brandModel.trim(),
-      color: color.trim(),
+      color: finalColor.trim(),
       photo_url: photoUrl,
       status: 'pending',
     });
@@ -280,15 +287,29 @@ function RegisterPage() {
               <label htmlFor="reg-color" className="block text-xs font-semibold text-slate-700 mb-1">
                 Cor Predominante *
               </label>
-              <input
-                type="text"
+              <select
                 id="reg-color"
                 required
-                placeholder="Ex: Preta com detalhes verdes"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
+                className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                {COLOR_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {isOtherColor && (
+                <input
+                  type="text"
+                  required
+                  placeholder="Digite a cor da bike"
+                  value={customColor}
+                  onChange={(e) => setCustomColor(e.target.value)}
+                  className="mt-2 w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              )}
             </div>
 
             <div className="mt-4">
