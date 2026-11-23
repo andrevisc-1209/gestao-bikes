@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import KpiCards from '../components/admin/KpiCards';
 import OccurrencesTab from '../components/admin/OccurrencesTab';
+import ApprovalsTab from '../components/admin/ApprovalsTab';
 
 type TabId = 'occurrences' | 'approvals' | 'fleet';
 
@@ -12,10 +13,6 @@ const TABS: { id: TabId; label: string; icon: typeof ClipboardList }[] = [
   { id: 'approvals', label: 'Aprovações', icon: UserCheck },
   { id: 'fleet', label: 'Frota', icon: Warehouse },
 ];
-
-function ApprovalsTab() {
-  return <div>Em construção</div>;
-}
 
 function FleetTab() {
   return <div>Em construção</div>;
@@ -119,7 +116,7 @@ function AdminPage() {
         />
 
         {activeTab === 'occurrences' && <OccurrencesTab />}
-        {activeTab === 'approvals' && <ApprovalsTab />}
+        {activeTab === 'approvals' && <ApprovalsTab onApproved={refreshKpiCounts} />}
         {activeTab === 'fleet' && <FleetTab />}
       </main>
     </div>
