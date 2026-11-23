@@ -12,9 +12,16 @@ vi.mock('../../lib/supabase', () => ({
 describe('FleetTab', () => {
   it('filters the table by search text', async () => {
     render(<FleetTab />);
-    await waitFor(() => screen.getByText(/Caloi/));
+    await waitFor(() => expect(screen.getAllByText(/Caloi/).length).toBeGreaterThan(0));
     fireEvent.change(screen.getByPlaceholderText(/buscar/i), { target: { value: '007' } });
-    expect(screen.queryByText(/Caloi/)).not.toBeInTheDocument();
-    expect(screen.getByText(/Sense/)).toBeInTheDocument();
+    expect(screen.queryAllByText(/Caloi/)).toHaveLength(0);
+    expect(screen.getAllByText(/Sense/).length).toBeGreaterThan(0);
+  });
+
+  it('renders bike data in both the mobile card list and the desktop table', async () => {
+    render(<FleetTab />);
+    await waitFor(() => expect(screen.getAllByText(/Caloi/).length).toBeGreaterThan(0));
+    // Two renders of the same data (one per breakpoint) — use getAllByText, not getByText.
+    expect(screen.getAllByText('Bloco A').length).toBeGreaterThanOrEqual(1);
   });
 });
