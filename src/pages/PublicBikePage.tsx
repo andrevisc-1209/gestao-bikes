@@ -56,14 +56,14 @@ function PublicBikePage() {
 
       if (!active) return;
 
-      if (error || !data) {
+      if (error) {
         setLoadState('not-found');
         return;
       }
 
-      // The RPC may return a single row or an array depending on the
-      // Postgres function's RETURNS clause; handle both shapes.
-      const row = Array.isArray(data) ? data[0] : data;
+      // get_public_bike_by_tag is `returns table(...)`, so supabase-js
+      // always returns an array here (empty if no match) — never a bare object.
+      const row = data?.[0];
       if (!row) {
         setLoadState('not-found');
         return;
