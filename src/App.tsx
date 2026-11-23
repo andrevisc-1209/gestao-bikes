@@ -2,13 +2,9 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import PublicBikePage from './pages/PublicBikePage'
 import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage'
+import AdminPage from './pages/AdminPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
-
-// AdminPage lands in Task 7; this is a placeholder for the routing shell.
-function AdminPage() {
-  return <div>Admin page placeholder</div>
-}
 
 function App() {
   return (
