@@ -59,6 +59,18 @@ on conflict (id) do nothing;
 
 -- 5. Row Level Security ----------------------------------------------------------
 
+-- RLS policies alone are not enough: Postgres also requires the calling role
+-- to hold the base table-level privilege, which tables created via raw SQL
+-- (as opposed to the Studio's table editor) do not receive automatically.
+-- Without these grants, every request fails with "permission denied for
+-- table ..." even when the matching RLS policy would allow the row.
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on bikes to authenticated;
+grant insert on bikes to anon;
+grant select, insert, update, delete on incidents to authenticated;
+grant insert on incidents to anon;
+grant select, update on condo_settings to authenticated;
+
 alter table condo_settings enable row level security;
 alter table bikes enable row level security;
 alter table incidents enable row level security;
