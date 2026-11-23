@@ -4,11 +4,12 @@ interface PhotoAttachFieldProps {
   id: string;
   file: File | null;
   onChange: (file: File | null) => void;
-  label: string;
+  prompt: string;
+  hint: string;
   required?: boolean;
 }
 
-function PhotoAttachField({ id, file, onChange, label, required }: PhotoAttachFieldProps) {
+function PhotoAttachField({ id, file, onChange, prompt, hint, required }: PhotoAttachFieldProps) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     onChange(e.target.files?.[0] ?? null);
   }
@@ -35,10 +36,8 @@ function PhotoAttachField({ id, file, onChange, label, required }: PhotoAttachFi
           <div className="w-11 h-11 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center mx-auto mb-2 text-emerald-600">
             <ImagePlus className="w-5 h-5" />
           </div>
-          <p className="text-xs font-semibold text-slate-700">
-            Clique para anexar uma foto lateral da bike (opcional)
-          </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">{label}</p>
+          <p className="text-xs font-semibold text-slate-700">{prompt}</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">{hint}</p>
         </div>
       )}
       <input

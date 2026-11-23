@@ -38,6 +38,30 @@ describe('PublicBikePage', () => {
     expect(screen.getByText(/confirme o número com a administração/i)).toBeInTheDocument();
   });
 
+  it('shows an incident-specific photo prompt, not the registration one', async () => {
+    rpcMock.mockResolvedValue({
+      data: [
+        {
+          id: 'bike-1',
+          tag_number: '42',
+          brand_model: 'Sense Impulse',
+          color: 'Preta',
+          photo_url: null,
+        },
+      ],
+      error: null,
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/notificar proprietário sobre esta bike/i)).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/clique para anexar uma foto do problema/i)).toBeInTheDocument();
+    expect(screen.queryByText(/foto lateral da bike/i)).not.toBeInTheDocument();
+  });
+
   it('shows a closing message after the notification is sent', async () => {
     rpcMock.mockResolvedValue({
       data: [

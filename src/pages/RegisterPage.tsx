@@ -320,7 +320,8 @@ function RegisterPage() {
                 id="reg-photo"
                 file={photoFile}
                 onChange={handlePhotoChange}
-                label="JPG ou PNG • Ajuda a evitar troca indevida de adesivo"
+                prompt="Clique para anexar uma foto lateral da bike (opcional)"
+                hint="JPG ou PNG • Ajuda a evitar troca indevida de adesivo"
               />
               {photoError && <p className="text-xs text-red-600 mt-2">{photoError}</p>}
             </div>

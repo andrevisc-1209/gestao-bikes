@@ -286,7 +286,8 @@ function PublicBikePage() {
               id="incident-photo"
               file={photoFile}
               onChange={handlePhotoChange}
-              label="Ajuda a confirmar o problema reportado"
+              prompt="Clique para anexar uma foto do problema (opcional)"
+              hint="Ajuda a confirmar o problema reportado"
             />
             {photoError && <p className="text-xs text-red-600">{photoError}</p>}
           </div>
