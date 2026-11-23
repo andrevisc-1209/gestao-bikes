@@ -55,6 +55,24 @@ bikes. It covers the whole lifecycle of a bike in the fleet:
    (there is no self-service admin sign-up — admins are provisioned directly
    in Supabase).
 
+5. **Mandatory — disable public sign-up.** Every privileged RLS policy and
+   RPC in `supabase/schema.sql` grants access with `to authenticated` (or an
+   equivalent "is this an authenticated session" check) and nothing more —
+   there is no separate `admins` table or role claim. Supabase projects allow
+   anyone to self-register a new account by default
+   (`supabase.auth.signUp`), and a freshly self-registered user is just as
+   "authenticated" as the admin account you created in step 4. Without this
+   step, anyone who signs up (even with a throwaway, unconfirmed-looking
+   email) can read every resident's name, unit, and WhatsApp number, and can
+   deactivate bikes or change condo capacity — the exact privacy leak this
+   app exists to prevent. To close this off, go to the Supabase dashboard,
+   **Authentication → Providers** (on some Supabase versions this is under
+   **Authentication → Settings** instead — look for email provider settings
+   either way) and **disable "Allow new users to sign up"** (sometimes
+   labeled "Enable email signups"). This must be done before the app is
+   used with real resident data; it ensures the only authenticated session
+   anyone can ever obtain is the one admin account you provision by hand.
+
 ## Running locally
 
 ```bash

@@ -79,7 +79,7 @@ create policy "condo_settings_update_authenticated"
 create policy "bikes_insert_pending"
   on bikes for insert
   to anon, authenticated
-  with check (status = 'pending');
+  with check (status = 'pending' and tag_number is null);
 
 create policy "bikes_all_authenticated"
   on bikes for all
@@ -90,7 +90,7 @@ create policy "bikes_all_authenticated"
 create policy "incidents_insert_anyone"
   on incidents for insert
   to anon, authenticated
-  with check (true);
+  with check (status = 'open' and resolved_at is null);
 
 create policy "incidents_all_authenticated"
   on incidents for all
@@ -154,6 +154,12 @@ declare
   v_next int;
   v_tag text;
 begin
+  -- Defense in depth: even though EXECUTE is revoked from public/anon below,
+  -- guard against misconfigured grants by checking the caller's role here too.
+  if auth.role() != 'authenticated' then
+    raise exception 'not authorized';
+  end if;
+
   update condo_settings
   set next_tag_number = next_tag_number + 1
   where id = (select id from condo_settings limit 1)
@@ -163,11 +169,19 @@ begin
 
   update bikes
   set tag_number = v_tag, status = 'active'
-  where id = p_bike_id;
+  where id = p_bike_id and status = 'pending';
+
+  if not found then
+    raise exception 'bike is not pending or does not exist';
+  end if;
 
   return v_tag;
 end;
 $$;
 
--- Not granted to anon — only admins approve bikes.
+-- Not granted to anon — only admins approve bikes. Postgres grants EXECUTE on
+-- new functions to PUBLIC by default, which implicitly includes anon, so we
+-- must explicitly revoke it after creating the function.
+revoke execute on function approve_bike(uuid) from public;
+revoke execute on function approve_bike(uuid) from anon;
 grant execute on function approve_bike(uuid) to authenticated;
