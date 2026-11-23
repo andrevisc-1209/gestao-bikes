@@ -56,9 +56,13 @@ function AdminPage() {
     });
   }, []);
 
+  // Re-fetch on every tab switch, not just on mount — otherwise the KPI
+  // cards go stale the moment data changes outside of an onApproved/
+  // onCapacityChanged callback (e.g. a resident submits a new registration
+  // while the admin is already on the page).
   useEffect(() => {
     refreshKpiCounts();
-  }, [refreshKpiCounts]);
+  }, [activeTab, refreshKpiCounts]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -115,7 +119,7 @@ function AdminPage() {
           openIncidentCount={kpiCounts.openIncidentCount}
         />
 
-        {activeTab === 'occurrences' && <OccurrencesTab />}
+        {activeTab === 'occurrences' && <OccurrencesTab onResolved={refreshKpiCounts} />}
         {activeTab === 'approvals' && <ApprovalsTab onApproved={refreshKpiCounts} />}
         {activeTab === 'fleet' && (
           <FleetTab

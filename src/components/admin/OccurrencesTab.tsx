@@ -16,7 +16,11 @@ function formatTimestamp(value: string): string {
   });
 }
 
-function OccurrencesTab() {
+interface OccurrencesTabProps {
+  onResolved?: () => void;
+}
+
+function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
   const [incidents, setIncidents] = useState<IncidentWithBike[]>([]);
   const [loading, setLoading] = useState(true);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
@@ -44,6 +48,7 @@ function OccurrencesTab() {
       .eq('id', id);
 
     await loadIncidents();
+    onResolved();
     setResolvingId(null);
   }
 
