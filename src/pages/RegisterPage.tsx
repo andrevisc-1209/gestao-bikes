@@ -75,20 +75,19 @@ function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!photoFile) {
-      setPhotoError('Clique na área tracejada para anexar a foto da bike.');
-      return;
-    }
-
     setSubmitting(true);
     setSubmitError(null);
     setPhotoError(null);
 
-    const result = await compressAndUpload(photoFile, 'bikes');
-    if ('error' in result) {
-      setPhotoError(result.error);
-      setSubmitting(false);
-      return;
+    let photoUrl: string | null = null;
+    if (photoFile) {
+      const result = await compressAndUpload(photoFile, 'bikes');
+      if ('error' in result) {
+        setPhotoError(result.error);
+        setSubmitting(false);
+        return;
+      }
+      photoUrl = result.url;
     }
 
     const { error } = await supabase.from('bikes').insert({
@@ -97,7 +96,7 @@ function RegisterPage() {
       owner_whatsapp: whatsapp.trim(),
       brand_model: brandModel.trim(),
       color: color.trim(),
-      photo_url: result.url,
+      photo_url: photoUrl,
       status: 'pending',
     });
 
@@ -294,7 +293,7 @@ function RegisterPage() {
 
             <div className="mt-4">
               <label htmlFor="reg-photo" className="block text-xs font-semibold text-slate-700 mb-1">
-                Foto da Bicicleta (para validação visual) *
+                Foto da Bicicleta (para validação visual)
               </label>
               <label
                 htmlFor="reg-photo"
@@ -320,7 +319,7 @@ function RegisterPage() {
                       <ImagePlus className="w-5 h-5" />
                     </div>
                     <p className="text-xs font-semibold text-slate-700">
-                      Clique para anexar uma foto lateral da bike
+                      Clique para anexar uma foto lateral da bike (opcional)
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       JPG ou PNG • Ajuda a evitar troca indevida de adesivo
