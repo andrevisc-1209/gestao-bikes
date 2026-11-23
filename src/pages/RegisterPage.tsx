@@ -3,14 +3,30 @@ import { ClipboardList, Bike as BikeIcon, ImagePlus, CheckCircle2, Check } from 
 import { supabase } from '../lib/supabase';
 import { compressAndUpload } from '../lib/imageCompression';
 
-const BLOCK_OPTIONS = ['Bloco A', 'Bloco B', 'Bloco C', 'Torre Única'];
+const BLOCK_OPTIONS = ['Bloco A', 'Bloco B'];
+
+const OTHER_BRAND_MODEL = 'Outro';
+
+const BRAND_MODEL_OPTIONS = [
+  'Lev Bee',
+  'Lev Cruiser Elétrica',
+  'Caloi E-Vibe Urbis',
+  'Caloi E-Vibe Easy Rider',
+  'Sense Impulse E-Trail',
+  'Oggi Big Wheel 8.0',
+  'Tailg Dyno E-Bike',
+  'Elleven E-Bike',
+  'Houston Smart E-Bike',
+  OTHER_BRAND_MODEL,
+];
 
 function RegisterPage() {
   const [block, setBlock] = useState(BLOCK_OPTIONS[0]);
   const [apartment, setApartment] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [brandModel, setBrandModel] = useState('');
+  const [brandModelOption, setBrandModelOption] = useState(BRAND_MODEL_OPTIONS[0]);
+  const [customBrandModel, setCustomBrandModel] = useState('');
   const [color, setColor] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -23,6 +39,9 @@ function RegisterPage() {
     setPhotoFile(file);
     setPhotoError(null);
   }
+
+  const isOtherBrandModel = brandModelOption === OTHER_BRAND_MODEL;
+  const brandModel = isOtherBrandModel ? customBrandModel : brandModelOption;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -174,15 +193,29 @@ function RegisterPage() {
                 <label htmlFor="reg-model" className="block text-xs font-semibold text-slate-700 mb-1">
                   Marca e Modelo *
                 </label>
-                <input
-                  type="text"
+                <select
                   id="reg-model"
                   required
-                  placeholder="Ex: Sense Impulse E-Trail"
-                  value={brandModel}
-                  onChange={(e) => setBrandModel(e.target.value)}
-                  className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
+                  value={brandModelOption}
+                  onChange={(e) => setBrandModelOption(e.target.value)}
+                  className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  {BRAND_MODEL_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                {isOtherBrandModel && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Digite a marca e o modelo da bike"
+                    value={customBrandModel}
+                    onChange={(e) => setCustomBrandModel(e.target.value)}
+                    className="mt-2 w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                )}
               </div>
               <div>
                 <label htmlFor="reg-color" className="block text-xs font-semibold text-slate-700 mb-1">

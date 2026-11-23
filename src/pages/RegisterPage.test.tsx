@@ -30,7 +30,7 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/apartamento/i), { target: { value: '504' } });
     fireEvent.change(screen.getByLabelText(/whatsapp/i), { target: { value: '21999990000' } });
     fireEvent.change(screen.getByLabelText(/nome completo/i), { target: { value: 'Mariana Costa' } });
-    fireEvent.change(screen.getByLabelText(/marca e modelo/i), { target: { value: 'Sense Impulse' } });
+    fireEvent.change(screen.getByLabelText(/marca e modelo/i), { target: { value: 'Sense Impulse E-Trail' } });
     fireEvent.change(screen.getByLabelText(/cor predominante/i), { target: { value: 'Preta' } });
     attachPhoto();
 
@@ -43,6 +43,6 @@ describe('RegisterPage', () => {
     expect(insertMock).not.toHaveBeenCalled();
     expect(screen.getByLabelText(/apartamento/i)).toHaveValue('504');
     expect(screen.getByLabelText(/nome completo/i)).toHaveValue('Mariana Costa');
-    expect(screen.getByLabelText(/marca e modelo/i)).toHaveValue('Sense Impulse');
+    expect(screen.getByLabelText(/marca e modelo/i)).toHaveValue('Sense Impulse E-Trail');
   });
 });
