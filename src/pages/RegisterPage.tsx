@@ -5,28 +5,45 @@ import { compressAndUpload } from '../lib/imageCompression';
 
 const BLOCK_OPTIONS = ['Bloco A', 'Bloco B'];
 
-const OTHER_BRAND_MODEL = 'Outro';
+const OTHER_MODEL = 'Outro modelo';
+const OTHER_BRAND = 'Outra marca';
 
-const BRAND_MODEL_OPTIONS = [
-  'Lev Bee',
-  'Lev Cruiser Elétrica',
-  'Caloi E-Vibe Urbis',
-  'Caloi E-Vibe Easy Rider',
-  'Sense Impulse E-Trail',
-  'Oggi Big Wheel 8.0',
-  'Tailg Dyno E-Bike',
-  'Elleven E-Bike',
-  'Houston Smart E-Bike',
-  OTHER_BRAND_MODEL,
-];
+const BRAND_MODELS: Record<string, string[]> = {
+  'Atrio (Multilaser)': ['Berlin', 'Miami', 'Seoul'],
+  Bee: ['Bee Cargo / Family', 'Bee Dobrável', 'Bee S1', 'Bee S2', 'Bee Urban / City'],
+  'Bemm (E-Moving)': ['Bemm City', 'Bemm Dobrável', 'Bemm Fat / Cargo', 'Bemm Sport'],
+  Bikelete: ['Smart MT2', 'Smart MT5', 'StreetGo S12'],
+  Caloi: ['E-Vibe City', 'E-Vibe Easy Rider', 'E-Vibe Urbam', 'Mobylette Elétrica'],
+  Cavalletta: ['C2', 'C3'],
+  'Duos Bikes': ['Confort', 'Eko', 'Fox', 'Touring'],
+  Honeywhale: ['B20', 'F6 Pro', 'S6-S'],
+  Inow: ['V9 Max', 'V40 Pro'],
+  Lev: ['Cruiser', 'E-Bike L', 'E-Bike S'],
+  Moura: ['Ella'],
+  Nado: ['C2', 'S73'],
+  Oggi: ['Big Wheel 8.0', 'Big Wheel 8.3', 'Lite Tour'],
+  Oimotoo: ['A9', 'S6'],
+  Panda: ['S73'],
+  Sense: ['Breeze', 'Easy', 'Impulse'],
+  Specialized: ['Turbo Como', 'Turbo Levo', 'Turbo Vado'],
+  'Tailg / Sousa': ['Dyno', 'Eco 350'],
+  'Two Dogs': ['Fat', 'Pliage (Dobrável)'],
+  Urbikes: ['V9 Max'],
+  Xroymexroy: ['EB3', 'EB5 Max', 'Y16'],
+  'Yoo Mobility': ['Y-200'],
+};
+
+const BRAND_OPTIONS = [...Object.keys(BRAND_MODELS), OTHER_BRAND];
 
 function RegisterPage() {
   const [block, setBlock] = useState(BLOCK_OPTIONS[0]);
   const [apartment, setApartment] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [brandModelOption, setBrandModelOption] = useState(BRAND_MODEL_OPTIONS[0]);
-  const [customBrandModel, setCustomBrandModel] = useState('');
+  const [brand, setBrand] = useState(BRAND_OPTIONS[0]);
+  const [model, setModel] = useState(BRAND_MODELS[BRAND_OPTIONS[0]][0]);
+  const [customBrand, setCustomBrand] = useState('');
+  const [customModel, setCustomModel] = useState('');
   const [color, setColor] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -40,8 +57,19 @@ function RegisterPage() {
     setPhotoError(null);
   }
 
-  const isOtherBrandModel = brandModelOption === OTHER_BRAND_MODEL;
-  const brandModel = isOtherBrandModel ? customBrandModel : brandModelOption;
+  const isOtherBrand = brand === OTHER_BRAND;
+  const modelOptions = isOtherBrand ? [] : [...BRAND_MODELS[brand], OTHER_MODEL];
+  const isOtherModel = model === OTHER_MODEL;
+
+  function handleBrandChange(nextBrand: string) {
+    setBrand(nextBrand);
+    setModel(nextBrand === OTHER_BRAND ? '' : BRAND_MODELS[nextBrand][0]);
+    setCustomModel('');
+  }
+
+  const brandModel = isOtherBrand
+    ? customBrand.trim()
+    : `${brand} ${isOtherModel ? customModel.trim() : model}`.trim();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -190,47 +218,77 @@ function RegisterPage() {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="reg-model" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Marca e Modelo *
+                <label htmlFor="reg-brand" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Marca *
                 </label>
                 <select
-                  id="reg-model"
+                  id="reg-brand"
                   required
-                  value={brandModelOption}
-                  onChange={(e) => setBrandModelOption(e.target.value)}
+                  value={brand}
+                  onChange={(e) => handleBrandChange(e.target.value)}
                   className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  {BRAND_MODEL_OPTIONS.map((option) => (
+                  {BRAND_OPTIONS.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
                   ))}
                 </select>
-                {isOtherBrandModel && (
+                {isOtherBrand && (
                   <input
                     type="text"
                     required
                     placeholder="Digite a marca e o modelo da bike"
-                    value={customBrandModel}
-                    onChange={(e) => setCustomBrandModel(e.target.value)}
+                    value={customBrand}
+                    onChange={(e) => setCustomBrand(e.target.value)}
                     className="mt-2 w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 )}
               </div>
               <div>
-                <label htmlFor="reg-color" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Cor Predominante *
+                <label htmlFor="reg-model" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Modelo *
                 </label>
-                <input
-                  type="text"
-                  id="reg-color"
-                  required
-                  placeholder="Ex: Preta com detalhes verdes"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
+                {!isOtherBrand && (
+                  <select
+                    id="reg-model"
+                    required
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {modelOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {!isOtherBrand && isOtherModel && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Digite o modelo da bike"
+                    value={customModel}
+                    onChange={(e) => setCustomModel(e.target.value)}
+                    className="mt-2 w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                )}
               </div>
+            </div>
+            <div className="mt-4">
+              <label htmlFor="reg-color" className="block text-xs font-semibold text-slate-700 mb-1">
+                Cor Predominante *
+              </label>
+              <input
+                type="text"
+                id="reg-color"
+                required
+                placeholder="Ex: Preta com detalhes verdes"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
             </div>
 
             <div className="mt-4">
