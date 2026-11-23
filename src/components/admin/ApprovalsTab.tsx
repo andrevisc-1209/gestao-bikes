@@ -18,6 +18,9 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
   const [loading, setLoading] = useState(true);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [assignedTag, setAssignedTag] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<{ bikeId: string; message: string } | null>(
+    null
+  );
 
   async function loadPendingBikes() {
     setLoading(true);
@@ -37,12 +40,18 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
 
   async function handleApprove(bikeId: string) {
     setApprovingId(bikeId);
+    setApproveError(null);
     const { data, error } = await supabase.rpc('approve_bike', { p_bike_id: bikeId });
 
     if (!error && data) {
       setAssignedTag(data as string);
       onApproved();
       await loadPendingBikes();
+    } else {
+      setApproveError({
+        bikeId,
+        message: error?.message || 'Não foi possível atribuir o adesivo. Tente novamente.',
+      });
     }
 
     setApprovingId(null);
@@ -95,15 +104,22 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleApprove(bike.id)}
-                  disabled={approvingId === bike.id}
-                  className="shrink-0 bg-white hover:bg-emerald-600 text-slate-700 hover:text-white border border-slate-200 hover:border-emerald-600 text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
-                >
-                  <Tag className="w-3.5 h-3.5" />
-                  <span>{approvingId === bike.id ? 'Atribuindo...' : 'Atribuir Adesivo'}</span>
-                </button>
+                <div className="shrink-0 flex flex-col items-end gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleApprove(bike.id)}
+                    disabled={approvingId === bike.id}
+                    className="shrink-0 bg-white hover:bg-emerald-600 text-slate-700 hover:text-white border border-slate-200 hover:border-emerald-600 text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>{approvingId === bike.id ? 'Atribuindo...' : 'Atribuir Adesivo'}</span>
+                  </button>
+                  {approveError?.bikeId === bike.id && (
+                    <p className="text-[11px] font-semibold text-rose-600 text-right">
+                      {approveError.message}
+                    </p>
+                  )}
+                </div>
               </div>
             ))
           )}
