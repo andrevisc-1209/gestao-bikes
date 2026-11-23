@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import {
   AlertTriangle,
   Bike as BikeIcon,
+  CheckCircle2,
   CircleSlash,
   MessageSquare,
   PlugZap,
@@ -157,6 +158,9 @@ function PublicBikePage() {
           <p className="text-xs text-slate-500">
             Bike não encontrada ou cadastro não regularizado.
           </p>
+          <p className="text-xs text-slate-400 mt-2">
+            Se você acabou de escanear um adesivo físico, confirme o número com a administração.
+          </p>
         </div>
       </div>
     );
@@ -187,6 +191,10 @@ function PublicBikePage() {
             )}
             <p className="mt-2">Por favor, verifique assim que possível. Obrigado pela colaboração!</p>
           </div>
+          <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-500">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            Pronto! Você já pode fechar esta página.
+          </p>
         </div>
       </div>
     );
