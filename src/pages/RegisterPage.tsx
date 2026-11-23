@@ -23,6 +23,7 @@ const BRAND_MODELS: Record<string, string[]> = {
   Nado: ['C2', 'S73'],
   Oggi: ['Big Wheel 8.0', 'Big Wheel 8.3', 'Lite Tour'],
   Oimotoo: ['A9', 'S6'],
+  Onn: ['N1', 'N1 Lite'],
   Panda: ['S73'],
   Sense: ['Breeze', 'Easy', 'Impulse'],
   Specialized: ['Turbo Como', 'Turbo Levo', 'Turbo Vado'],
