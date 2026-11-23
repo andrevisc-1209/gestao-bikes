@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import {
   AlertTriangle,
   Bike as BikeIcon,
-  Camera,
   CircleSlash,
   MessageSquare,
   PlugZap,
@@ -17,6 +16,7 @@ import { compressAndUpload } from '../lib/imageCompression';
 import { INCIDENT_REASONS } from '../lib/reasons';
 import { buildWhatsappPreview, type WhatsappPreviewData } from '../lib/whatsapp';
 import type { PublicBike } from '../types/database';
+import PhotoAttachField from '../components/PhotoAttachField';
 
 const REASON_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   'alert-triangle': AlertTriangle,
@@ -80,8 +80,7 @@ function PublicBikePage() {
     };
   }, [tagNumber]);
 
-  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
+  function handlePhotoChange(file: File | null) {
     setPhotoFile(file);
     setPhotoError(null);
   }
@@ -275,18 +274,12 @@ function PublicBikePage() {
               />
             </div>
 
-            <label className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:border-emerald-500 hover:text-emerald-700 text-xs font-medium transition-colors cursor-pointer">
-              <Camera className="w-4 h-4" />
-              <span>
-                {photoFile ? `Foto do local anexada (${photoFile.name})` : 'Anexar foto do local (opcional)'}
-              </span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
-            </label>
+            <PhotoAttachField
+              id="incident-photo"
+              file={photoFile}
+              onChange={handlePhotoChange}
+              label="Ajuda a confirmar o problema reportado"
+            />
             {photoError && <p className="text-xs text-red-600">{photoError}</p>}
           </div>
 

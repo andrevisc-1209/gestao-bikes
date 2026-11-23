@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ClipboardList, Bike as BikeIcon, ImagePlus, CheckCircle2, Check } from 'lucide-react';
+import { ClipboardList, Bike as BikeIcon, CheckCircle2, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressAndUpload } from '../lib/imageCompression';
+import PhotoAttachField from '../components/PhotoAttachField';
 
 const BLOCK_OPTIONS = ['Bloco A', 'Bloco B'];
 
@@ -52,8 +53,7 @@ function RegisterPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
+  function handlePhotoChange(file: File | null) {
     setPhotoFile(file);
     setPhotoError(null);
   }
@@ -295,45 +295,12 @@ function RegisterPage() {
               <label htmlFor="reg-photo" className="block text-xs font-semibold text-slate-700 mb-1">
                 Foto da Bicicleta (para validação visual)
               </label>
-              <label
-                htmlFor="reg-photo"
-                className={`cursor-pointer border-2 border-dashed rounded-2xl p-5 text-center transition-all flex items-center justify-center gap-3 ${
-                  photoFile
-                    ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700'
-                    : 'border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40'
-                }`}
-              >
-                {photoFile ? (
-                  <>
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                    <div className="text-left">
-                      <p className="text-xs font-bold">{photoFile.name} anexada com sucesso!</p>
-                      <p className="text-[11px] text-emerald-600">
-                        Clique novamente se desejar substituir
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    <div className="w-11 h-11 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center mx-auto mb-2 text-emerald-600">
-                      <ImagePlus className="w-5 h-5" />
-                    </div>
-                    <p className="text-xs font-semibold text-slate-700">
-                      Clique para anexar uma foto lateral da bike (opcional)
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      JPG ou PNG • Ajuda a evitar troca indevida de adesivo
-                    </p>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  id="reg-photo"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                />
-              </label>
+              <PhotoAttachField
+                id="reg-photo"
+                file={photoFile}
+                onChange={handlePhotoChange}
+                label="JPG ou PNG • Ajuda a evitar troca indevida de adesivo"
+              />
               {photoError && <p className="text-xs text-red-600 mt-2">{photoError}</p>}
             </div>
           </div>
