@@ -79,7 +79,25 @@ npx vitest run
 
 ## Deploying
 
-This project is deployed to GitHub Pages via a CI workflow — see
-[Task 11: GitHub Pages deployment](docs/superpowers/plans/2026-11-23-bikecondo-webapp.md#task-11-github-pages-deployment)
-in the implementation plan for the deploy workflow and `vite.config.ts` base
-path setup.
+This project deploys to GitHub Pages automatically via
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), which builds
+the app and publishes `dist/` on every push to `main`. The Vite `base` path
+in `vite.config.ts` is set to `/gestao-bikes/` to match this repo's name,
+since GitHub Pages serves project pages from a `<user>.github.io/<repo>/`
+subpath.
+
+Two one-time manual steps are required in the GitHub repo settings before
+the workflow can deploy successfully (the workflow cannot do these itself):
+
+1. **Settings → Pages**: set "Source" to **GitHub Actions**.
+2. **Settings → Secrets and variables → Actions**: add repository secrets
+   `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with the values from your
+   Supabase project's API settings. (These end up visible in the built
+   client bundle, since this is a public-anon-key client app — they're kept
+   as secrets only to avoid hardcoding environment-specific values in the
+   repo.)
+
+Once those are set, pushes to `main` deploy automatically. The app is
+served at `https://andrevisc-1209.github.io/gestao-bikes/`, with routes such
+as `https://andrevisc-1209.github.io/gestao-bikes/#/cadastro` (routing uses
+`HashRouter`, so the `#` is expected).
