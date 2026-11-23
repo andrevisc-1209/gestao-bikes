@@ -67,18 +67,18 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-slate-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-500/20 border border-emerald-500/40 p-2 rounded-xl text-emerald-400">
               <BikeIcon className="w-6 h-6" />
             </div>
             <div>
               <span className="font-extrabold text-lg tracking-tight">BikeCondo</span>
-              <p className="text-xs text-slate-400">Painel Administrativo</p>
+              <p className="hidden sm:block text-xs text-slate-400">Painel Administrativo</p>
             </div>
           </div>
 
-          <nav className="flex flex-wrap justify-center bg-slate-800/90 p-1 rounded-xl border border-slate-700/70 gap-1 w-full md:w-auto">
+          <nav className="flex-1 md:flex-none flex items-center justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -87,6 +87,7 @@ function AdminPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
+                  aria-label={tab.label}
                   className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25'
@@ -94,7 +95,7 @@ function AdminPage() {
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               );
             })}
@@ -103,10 +104,11 @@ function AdminPage() {
           <button
             type="button"
             onClick={() => signOut()}
+            aria-label="Sair"
             className="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            <span>Sair</span>
+            <span className="hidden sm:inline">Sair</span>
           </button>
         </div>
       </header>
