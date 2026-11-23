@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bike as BikeIcon, Search, Warehouse } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { Bike as BikeIcon, Search, Warehouse, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Bike } from '../../types/database';
 import CapacityModal from './CapacityModal';
@@ -25,6 +26,7 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
   );
   const [capacityModalOpen, setCapacityModalOpen] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);
+  const [viewingQrTag, setViewingQrTag] = useState<string | null>(null);
 
   async function loadBikes() {
     setLoading(true);
@@ -170,7 +172,14 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                       <p className="text-[11px] text-slate-500">{bike.owner_name}</p>
                     </div>
                     {!isInactive && (
-                      <div>
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => setViewingQrTag(bike.tag_number)}
+                          className="w-full text-center text-slate-600 font-semibold text-xs py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
+                        >
+                          Ver QR
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDeactivate(bike)}
@@ -245,14 +254,23 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                             <span className="text-slate-400 font-medium px-2 py-1">—</span>
                           ) : (
                             <div className="flex flex-col items-end gap-1">
-                              <button
-                                type="button"
-                                onClick={() => handleDeactivate(bike)}
-                                disabled={deactivatingId === bike.id}
-                                className="text-slate-400 hover:text-rose-600 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors disabled:opacity-50"
-                              >
-                                {deactivatingId === bike.id ? 'Processando...' : 'Dar Baixa'}
-                              </button>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setViewingQrTag(bike.tag_number)}
+                                  className="text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+                                >
+                                  Ver QR
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeactivate(bike)}
+                                  disabled={deactivatingId === bike.id}
+                                  className="text-slate-400 hover:text-rose-600 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors disabled:opacity-50"
+                                >
+                                  {deactivatingId === bike.id ? 'Processando...' : 'Dar Baixa'}
+                                </button>
+                              </div>
                               {deactivateError?.bikeId === bike.id && (
                                 <p className="text-[11px] font-semibold text-rose-600">
                                   {deactivateError.message}
@@ -277,6 +295,34 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
           onSave={handleSaveCapacity}
           onClose={() => setCapacityModalOpen(false)}
         />
+      )}
+
+      {viewingQrTag && (
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 text-center relative">
+            <button
+              type="button"
+              onClick={() => setViewingQrTag(null)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-slate-600"
+              aria-label="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="font-bold text-slate-800">Adesivo da Bike</h3>
+            <p className="text-sm text-slate-500">
+              Imprima e cole este QR Code na bicicleta.
+            </p>
+            <div className="bg-slate-900 text-white font-extrabold text-sm px-3 py-1.5 rounded-lg inline-block">
+              BIKE {viewingQrTag}
+            </div>
+            <div className="flex justify-center p-4 bg-white">
+              <QRCodeSVG
+                value={`${window.location.origin}${window.location.pathname}#/b/${viewingQrTag}`}
+                size={180}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

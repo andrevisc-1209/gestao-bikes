@@ -48,4 +48,24 @@ describe('FleetTab', () => {
     expect(window.confirm).toHaveBeenCalled();
     expect(updateMock).not.toHaveBeenCalled();
   });
+
+  it('shows the QR code for an active bike when "Ver QR" is clicked', async () => {
+    render(<FleetTab />);
+    await waitFor(() => expect(screen.getAllByText(/Caloi/).length).toBeGreaterThan(0));
+
+    expect(screen.queryByText('Adesivo da Bike')).not.toBeInTheDocument();
+
+    const [viewQrButton] = screen.getAllByText('Ver QR');
+    fireEvent.click(viewQrButton);
+
+    expect(screen.getByText('Adesivo da Bike')).toBeInTheDocument();
+    expect(screen.getByText('BIKE 014')).toBeInTheDocument();
+
+    const modal = screen.getByText('Adesivo da Bike').closest('div')?.parentElement;
+    const qrSvg = modal?.querySelector('svg[width="180"]');
+    expect(qrSvg).toBeTruthy();
+
+    fireEvent.click(screen.getByLabelText('Fechar'));
+    expect(screen.queryByText('Adesivo da Bike')).not.toBeInTheDocument();
+  });
 });
