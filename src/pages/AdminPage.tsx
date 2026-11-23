@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import KpiCards from '../components/admin/KpiCards';
 import OccurrencesTab from '../components/admin/OccurrencesTab';
 import ApprovalsTab from '../components/admin/ApprovalsTab';
+import FleetTab from '../components/admin/FleetTab';
 
 type TabId = 'occurrences' | 'approvals' | 'fleet';
 
@@ -14,15 +15,12 @@ const TABS: { id: TabId; label: string; icon: typeof ClipboardList }[] = [
   { id: 'fleet', label: 'Frota', icon: Warehouse },
 ];
 
-function FleetTab() {
-  return <div>Em construção</div>;
-}
-
 interface KpiCounts {
   activeCount: number;
   totalCapacity: number;
   pendingCount: number;
   openIncidentCount: number;
+  settingsId: string | null;
 }
 
 const EMPTY_KPI_COUNTS: KpiCounts = {
@@ -30,6 +28,7 @@ const EMPTY_KPI_COUNTS: KpiCounts = {
   totalCapacity: 0,
   pendingCount: 0,
   openIncidentCount: 0,
+  settingsId: null,
 };
 
 function AdminPage() {
@@ -44,7 +43,7 @@ function AdminPage() {
     const [activeRes, pendingRes, settingsRes, openIncidentRes] = await Promise.all([
       supabase.from('bikes').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('bikes').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('condo_settings').select('total_capacity').single(),
+      supabase.from('condo_settings').select('id, total_capacity').single(),
       supabase.from('incidents').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     ]);
 
@@ -53,6 +52,7 @@ function AdminPage() {
       totalCapacity: settingsRes.data?.total_capacity ?? 0,
       pendingCount: pendingRes.count ?? 0,
       openIncidentCount: openIncidentRes.count ?? 0,
+      settingsId: settingsRes.data?.id ?? null,
     });
   }, []);
 
@@ -117,7 +117,13 @@ function AdminPage() {
 
         {activeTab === 'occurrences' && <OccurrencesTab />}
         {activeTab === 'approvals' && <ApprovalsTab onApproved={refreshKpiCounts} />}
-        {activeTab === 'fleet' && <FleetTab />}
+        {activeTab === 'fleet' && (
+          <FleetTab
+            currentCapacity={kpiCounts.totalCapacity}
+            settingsId={kpiCounts.settingsId ?? undefined}
+            onCapacityChanged={refreshKpiCounts}
+          />
+        )}
       </main>
     </div>
   );
