@@ -4,6 +4,7 @@ import { Bike as BikeIcon, Search, Warehouse, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Bike } from '../../types/database';
 import CapacityModal from './CapacityModal';
+import BikeDetailModal from './BikeDetailModal';
 
 type FleetBike = Pick<
   Bike,
@@ -27,6 +28,8 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
   const [capacityModalOpen, setCapacityModalOpen] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);
   const [viewingQrTag, setViewingQrTag] = useState<string | null>(null);
+  const [detailBike, setDetailBike] = useState<Bike | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   async function loadBikes() {
     setLoading(true);
@@ -73,6 +76,17 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
     }
 
     setDeactivatingId(null);
+  }
+
+  async function handleViewDetail(bike: FleetBike) {
+    setDetailError(null);
+    const { data, error } = await supabase.from('bikes').select('*').eq('id', bike.id).single();
+
+    if (!error && data) {
+      setDetailBike(data as Bike);
+    } else {
+      setDetailError(error?.message || 'Não foi possível carregar o cadastro completo. Tente novamente.');
+    }
   }
 
   async function handleSaveCapacity(capacity: number) {
@@ -133,6 +147,10 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
           <p className="px-5 pt-3 text-[11px] font-semibold text-rose-600">{capacityError}</p>
         )}
 
+        {detailError && (
+          <p className="px-5 pt-3 text-[11px] font-semibold text-rose-600">{detailError}</p>
+        )}
+
         {filteredBikes.length === 0 ? (
           <p className="py-8 text-center text-xs text-slate-400">Nenhuma bicicleta encontrada.</p>
         ) : (
@@ -179,6 +197,13 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                           className="w-full text-center text-slate-600 font-semibold text-xs py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
                         >
                           Ver QR
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleViewDetail(bike)}
+                          className="w-full text-center text-slate-600 font-semibold text-xs py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
+                        >
+                          Ver cadastro completo
                         </button>
                         <button
                           type="button"
@@ -264,6 +289,13 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                                 </button>
                                 <button
                                   type="button"
+                                  onClick={() => handleViewDetail(bike)}
+                                  className="text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+                                >
+                                  Ver cadastro completo
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => handleDeactivate(bike)}
                                   disabled={deactivatingId === bike.id}
                                   className="text-slate-400 hover:text-rose-600 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors disabled:opacity-50"
@@ -294,6 +326,17 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
           currentCapacity={currentCapacity}
           onSave={handleSaveCapacity}
           onClose={() => setCapacityModalOpen(false)}
+        />
+      )}
+
+      {detailBike && (
+        <BikeDetailModal
+          bike={detailBike}
+          onClose={() => setDetailBike(null)}
+          onSaved={async () => {
+            setDetailBike(null);
+            await loadBikes();
+          }}
         />
       )}
 
