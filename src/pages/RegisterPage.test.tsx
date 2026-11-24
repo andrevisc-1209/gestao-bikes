@@ -10,6 +10,12 @@ vi.mock('../lib/imageCompression', () => ({
   compressAndUpload: (...args: unknown[]) => compressAndUploadMock(...args),
 }));
 
+const navigateMock = vi.fn();
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  useNavigate: () => navigateMock,
+}));
+
 function attachPhoto(file = new File(['x'], 'bike.jpg', { type: 'image/jpeg' })) {
   const input = document.getElementById('reg-photo') as HTMLInputElement;
   fireEvent.change(input, { target: { files: [file] } });
@@ -63,5 +69,28 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText(/nome completo/i)).toHaveValue('Mariana Costa');
     expect(screen.getByLabelText(/^marca/i)).toHaveValue('Sense');
     expect(screen.getByLabelText(/^modelo/i)).toHaveValue('Impulse');
+  });
+
+  it('normalizes and navigates to /b/:tag when reporting an existing bike', async () => {
+    render(<RegisterPage />);
+    fireEvent.change(screen.getByLabelText(/número do adesivo/i), { target: { value: '7' } });
+    fireEvent.click(screen.getByRole('button', { name: /reportar um problema/i }));
+    expect(navigateMock).toHaveBeenCalledWith('/b/007');
+  });
+
+  it('trims whitespace before navigating', async () => {
+    render(<RegisterPage />);
+    fireEvent.change(screen.getByLabelText(/número do adesivo/i), { target: { value: '  12  ' } });
+    fireEvent.click(screen.getByRole('button', { name: /reportar um problema/i }));
+    expect(navigateMock).toHaveBeenCalledWith('/b/012');
+  });
+
+  it('pressing Enter in the número do adesivo field does not submit the cadastro form', () => {
+    render(<RegisterPage />);
+    fireEvent.change(screen.getByLabelText(/número do adesivo/i), { target: { value: '7' } });
+    fireEvent.keyDown(screen.getByLabelText(/número do adesivo/i), { key: 'Enter', code: 'Enter' });
+
+    expect(insertMock).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 });
