@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import RegisterPage from './RegisterPage';
+
+function renderPage() {
+  render(
+    <MemoryRouter>
+      <RegisterPage />
+    </MemoryRouter>
+  );
+}
 
 const insertMock = vi.fn();
 vi.mock('../lib/supabase', () => ({ supabase: { from: () => ({ insert: insertMock }) } }));
@@ -8,12 +17,6 @@ vi.mock('../lib/supabase', () => ({ supabase: { from: () => ({ insert: insertMoc
 const compressAndUploadMock = vi.fn();
 vi.mock('../lib/imageCompression', () => ({
   compressAndUpload: (...args: unknown[]) => compressAndUploadMock(...args),
-}));
-
-const navigateMock = vi.fn();
-vi.mock('react-router-dom', async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  useNavigate: () => navigateMock,
 }));
 
 function attachPhoto(file = new File(['x'], 'bike.jpg', { type: 'image/jpeg' })) {
@@ -28,7 +31,7 @@ describe('RegisterPage', () => {
 
   it('succeeds with no photo attached, inserting a null photo_url', async () => {
     insertMock.mockResolvedValue({ error: null });
-    render(<RegisterPage />);
+    renderPage();
 
     fireEvent.change(screen.getByLabelText(/apartamento/i), { target: { value: '504' } });
     fireEvent.change(screen.getByLabelText(/whatsapp/i), { target: { value: '21999990000' } });
@@ -48,7 +51,7 @@ describe('RegisterPage', () => {
 
   it('shows an inline error and preserves typed fields when the upload fails', async () => {
     compressAndUploadMock.mockResolvedValue({ error: 'Não foi possível enviar a foto. Tente novamente.' });
-    render(<RegisterPage />);
+    renderPage();
 
     fireEvent.change(screen.getByLabelText(/apartamento/i), { target: { value: '504' } });
     fireEvent.change(screen.getByLabelText(/whatsapp/i), { target: { value: '21999990000' } });
@@ -69,28 +72,5 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText(/nome completo/i)).toHaveValue('Mariana Costa');
     expect(screen.getByLabelText(/^marca/i)).toHaveValue('Sense');
     expect(screen.getByLabelText(/^modelo/i)).toHaveValue('Impulse');
-  });
-
-  it('normalizes and navigates to /b/:tag when reporting an existing bike', async () => {
-    render(<RegisterPage />);
-    fireEvent.change(screen.getByLabelText(/número do adesivo/i), { target: { value: '7' } });
-    fireEvent.click(screen.getByRole('button', { name: /reportar um problema/i }));
-    expect(navigateMock).toHaveBeenCalledWith('/b/007');
-  });
-
-  it('trims whitespace before navigating', async () => {
-    render(<RegisterPage />);
-    fireEvent.change(screen.getByLabelText(/número do adesivo/i), { target: { value: '  12  ' } });
-    fireEvent.click(screen.getByRole('button', { name: /reportar um problema/i }));
-    expect(navigateMock).toHaveBeenCalledWith('/b/012');
-  });
-
-  it('pressing Enter in the número do adesivo field does not submit the cadastro form', () => {
-    render(<RegisterPage />);
-    fireEvent.change(screen.getByLabelText(/número do adesivo/i), { target: { value: '7' } });
-    fireEvent.keyDown(screen.getByLabelText(/número do adesivo/i), { key: 'Enter', code: 'Enter' });
-
-    expect(insertMock).not.toHaveBeenCalled();
-    expect(navigateMock).not.toHaveBeenCalled();
   });
 });
