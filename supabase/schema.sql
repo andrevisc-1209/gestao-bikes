@@ -61,6 +61,25 @@ create table stickers (
   created_at timestamptz not null default now()
 );
 
+-- Snapshot of a bike's registration fields taken immediately before each
+-- edit via update_bike_registration. Written only by that SECURITY DEFINER
+-- RPC — never insert/update/delete here directly.
+create table bikes_history (
+  id uuid primary key default gen_random_uuid(),
+  bike_id uuid not null references bikes(id),
+  tag_number text,
+  unit_block text not null,
+  owner_name text not null,
+  owner_whatsapp text not null,
+  brand_model text not null,
+  color text not null,
+  photo_url text,
+  status bike_status not null,
+  created_at timestamptz not null,
+  edited_at timestamptz not null default now(),
+  edited_by uuid references auth.users(id)
+);
+
 -- 4. Storage --------------------------------------------------------------------
 
 insert into storage.buckets (id, name, public)
@@ -83,11 +102,15 @@ grant select, update on condo_settings to authenticated;
 grant select on stickers to authenticated;
 -- no insert/update grant to anon or authenticated directly — only the
 -- SECURITY DEFINER RPCs below ever write to this table.
+grant select on bikes_history to authenticated;
+-- No insert/update/delete grant to anyone — only update_bike_registration
+-- (security definer) writes here.
 
 alter table condo_settings enable row level security;
 alter table bikes enable row level security;
 alter table incidents enable row level security;
 alter table stickers enable row level security;
+alter table bikes_history enable row level security;
 
 -- condo_settings: authenticated (admin) only, no public access at all.
 create policy "condo_settings_select_authenticated"
@@ -127,6 +150,13 @@ create policy "incidents_all_authenticated"
 -- SECURITY DEFINER RPCs below (generate_sticker_batch, approve_bike).
 create policy "stickers_select_authenticated"
   on stickers for select
+  to authenticated
+  using (true);
+
+-- bikes_history: admins only read directly; all writes go through the
+-- SECURITY DEFINER update_bike_registration RPC below.
+create policy "bikes_history_select_authenticated"
+  on bikes_history for select
   to authenticated
   using (true);
 
@@ -278,3 +308,57 @@ $$;
 revoke execute on function approve_bike(uuid) from public;
 revoke execute on function approve_bike(uuid) from anon;
 grant execute on function approve_bike(uuid) to authenticated;
+
+-- Edits a bike's registration fields, snapshotting the pre-edit row into
+-- bikes_history first. If p_bike_id does not exist, the insert into
+-- bikes_history affects zero rows, `not found` fires, and the function
+-- raises before the update to bikes ever runs — so a bad id leaves both
+-- tables untouched.
+create function update_bike_registration(
+  p_bike_id uuid,
+  p_unit_block text,
+  p_owner_name text,
+  p_owner_whatsapp text,
+  p_brand_model text,
+  p_color text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Defense in depth: even though EXECUTE is revoked from public/anon below,
+  -- guard against misconfigured grants by checking the caller's role here too.
+  if auth.role() != 'authenticated' then
+    raise exception 'not authorized';
+  end if;
+
+  insert into bikes_history (
+    bike_id, tag_number, unit_block, owner_name, owner_whatsapp,
+    brand_model, color, photo_url, status, created_at, edited_by
+  )
+  select id, tag_number, unit_block, owner_name, owner_whatsapp,
+         brand_model, color, photo_url, status, created_at, auth.uid()
+  from bikes where id = p_bike_id;
+
+  if not found then
+    raise exception 'bike not found';
+  end if;
+
+  update bikes set
+    unit_block = p_unit_block,
+    owner_name = p_owner_name,
+    owner_whatsapp = p_owner_whatsapp,
+    brand_model = p_brand_model,
+    color = p_color
+  where id = p_bike_id;
+end;
+$$;
+
+-- Not granted to anon — only admins edit bike registrations. Postgres grants
+-- EXECUTE on new functions to PUBLIC by default, which implicitly includes
+-- anon, so we must explicitly revoke it after creating the function.
+revoke execute on function update_bike_registration(uuid,text,text,text,text,text) from public;
+revoke execute on function update_bike_registration(uuid,text,text,text,text,text) from anon;
+grant execute on function update_bike_registration(uuid,text,text,text,text,text) to authenticated;
