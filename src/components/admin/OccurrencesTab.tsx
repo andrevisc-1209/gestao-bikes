@@ -7,7 +7,23 @@ import BikeDetailModal from './BikeDetailModal';
 import ResolveIncidentModal from './ResolveIncidentModal';
 import IncidentDetailModal from './IncidentDetailModal';
 
-export type IncidentWithBike =Incident & {
+function IncidentThumbnail({ photoUrl }: { photoUrl: string | null | undefined }) {
+  const safe = safeHttpUrl(photoUrl);
+  if (!safe) return null;
+  return (
+    <img
+      src={safe}
+      alt="Foto da ocorrência"
+      className="w-12 h-12 rounded-lg object-cover border border-slate-200 cursor-pointer"
+      onClick={(event) => {
+        event.stopPropagation();
+        window.open(safe, '_blank', 'noopener,noreferrer');
+      }}
+    />
+  );
+}
+
+export type IncidentWithBike = Incident & {
   bikes: {
     tag_number: string | null;
     unit_block: string;
@@ -128,18 +144,7 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
                       )}
                     </p>
                   )}
-                  {safeHttpUrl(incident.photo_url) && (
-                    <img
-                      src={safeHttpUrl(incident.photo_url)!}
-                      alt="Foto da ocorrência"
-                      className="w-12 h-12 rounded-lg object-cover border border-slate-200 cursor-pointer"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        const safe = safeHttpUrl(incident.photo_url);
-                        if (safe) window.open(safe, '_blank', 'noopener,noreferrer');
-                      }}
-                    />
-                  )}
+                  <IncidentThumbnail photoUrl={incident.photo_url} />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 shrink-0">
                   <button

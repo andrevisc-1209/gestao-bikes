@@ -87,11 +87,12 @@ describe('AdminPage refresh', () => {
     const nav = screen.getByRole('button', { name: 'Frota' }).closest('nav')!;
     expect(nav.className).toContain('order-last');
     expect(nav.className).toContain('w-full');
+    expect(nav.className).toContain('flex-none');
     expect(nav.className).toContain('lg:order-none');
     expect(nav.className).toContain('lg:w-auto');
   });
 
-  it('still switches tabs',async () => {
+  it('still switches tabs', async () => {
     render(<AdminPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Aprovações' }));
     await screen.findByText('approvals-fake');

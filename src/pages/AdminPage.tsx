@@ -83,7 +83,7 @@ function AdminPage() {
             </div>
           </div>
 
-          <nav className="order-last w-full flex-none lg:order-none lg:w-auto md:flex-none flex items-center justify-start md:justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
+          <nav className="order-last w-full flex-none lg:order-none lg:w-auto flex items-center justify-start md:justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;

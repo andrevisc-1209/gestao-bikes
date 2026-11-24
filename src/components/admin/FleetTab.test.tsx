@@ -149,19 +149,33 @@ describe('FleetTab', () => {
     });
   });
 
-  it('shows "Ver cadastro completo" and "Ver QR" for an inactive bike, but not "Dar Baixa"', async () => {
+  it('inactive bike shows "Ver cadastro completo" only; active bike shows all three actions', async () => {
     fleetListData = [{ ...fleetListData[0], status: 'inactive' }];
-    render(<FleetTab />);
+    const { unmount } = render(<FleetTab />);
     await waitFor(() => expect(screen.getAllByText(/Inativa/).length).toBeGreaterThan(0));
 
-    const rows = [
+    const inactiveRows = [
       screen.getByRole('table').querySelector('tbody tr') as HTMLElement,
       screen.getAllByText(/Inativa/)[0].closest('div.p-4') as HTMLElement,
     ];
-    for (const row of rows) {
+    for (const row of inactiveRows) {
+      expect(within(row).getByText('Ver cadastro completo')).toBeInTheDocument();
+      expect(within(row).queryByText('Ver QR')).not.toBeInTheDocument();
+      expect(within(row).queryByText('Dar Baixa')).not.toBeInTheDocument();
+    }
+    unmount();
+
+    fleetListData = [{ ...fleetListData[0], status: 'active' }];
+    render(<FleetTab />);
+    await waitFor(() => expect(screen.getAllByText(/Ativa/).length).toBeGreaterThan(0));
+    const activeRows = [
+      screen.getByRole('table').querySelector('tbody tr') as HTMLElement,
+      screen.getAllByText(/Ativa/)[0].closest('div.p-4') as HTMLElement,
+    ];
+    for (const row of activeRows) {
       expect(within(row).getByText('Ver cadastro completo')).toBeInTheDocument();
       expect(within(row).getByText('Ver QR')).toBeInTheDocument();
-      expect(within(row).queryByText('Dar Baixa')).not.toBeInTheDocument();
+      expect(within(row).getByText('Dar Baixa')).toBeInTheDocument();
     }
   });
 });

@@ -167,13 +167,15 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                       <p className="text-[11px] text-slate-500">{bike.owner_name}</p>
                     </div>
                     <div className="space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => setViewingQrTag(bike.tag_number)}
-                        className="w-full text-center text-slate-600 font-semibold text-xs py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
-                      >
-                        Ver QR
-                      </button>
+                      {!isInactive && (
+                        <button
+                          type="button"
+                          onClick={() => setViewingQrTag(bike.tag_number)}
+                          className="w-full text-center text-slate-600 font-semibold text-xs py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
+                        >
+                          Ver QR
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleViewDetail(bike)}
@@ -247,13 +249,15 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <button
-                              type="button"
-                              onClick={() => setViewingQrTag(bike.tag_number)}
-                              className="text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
-                            >
-                              Ver QR
-                            </button>
+                            {!isInactive && (
+                              <button
+                                type="button"
+                                onClick={() => setViewingQrTag(bike.tag_number)}
+                                className="text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+                              >
+                                Ver QR
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => handleViewDetail(bike)}
