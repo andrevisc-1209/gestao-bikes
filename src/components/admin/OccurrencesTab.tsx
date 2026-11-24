@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Check, CheckCircle, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import type { Incident } from '../../types/database';
+import type { Bike, Incident } from '../../types/database';
+import BikeDetailModal from './BikeDetailModal';
+import ResolveIncidentModal from './ResolveIncidentModal';
 
 type IncidentWithBike = Incident & {
-  bikes: { tag_number: string | null; unit_block: string } | null;
+  bikes: {
+    tag_number: string | null;
+    unit_block: string;
+    owner_name: string | null;
+    owner_whatsapp: string | null;
+  } | null;
 };
 
 function formatTimestamp(value: string): string {
@@ -23,35 +30,38 @@ interface OccurrencesTabProps {
 function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
   const [incidents, setIncidents] = useState<IncidentWithBike[]>([]);
   const [loading, setLoading] = useState(true);
-  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [resolvingIncident, setResolvingIncident] = useState<{ id: string } | null>(null);
+  const [viewingBike, setViewingBike] = useState<Bike | null>(null);
+  const [viewError, setViewError] = useState<string | null>(null);
 
   async function loadIncidents() {
     setLoading(true);
     const { data } = await supabase
       .from('incidents')
-      .select('*, bikes(tag_number, unit_block)')
+      .select('*, bikes(tag_number, unit_block, owner_name, owner_whatsapp)')
       .order('created_at', { ascending: false });
 
     setIncidents((data as IncidentWithBike[] | null) ?? []);
     setLoading(false);
   }
 
+  async function handleViewRegistration(bikeId: string) {
+    setViewError(null);
+    const { data, error } = await supabase.from('bikes').select('*').eq('id', bikeId).single();
+
+    if (!error && data) {
+      setViewingBike(data as Bike);
+    } else {
+      setViewError(error?.message || 'Não foi possível carregar o cadastro completo. Tente novamente.');
+    }
+  }
+
   useEffect(() => {
     loadIncidents();
   }, []);
 
-  async function handleResolve(id: string) {
-    if (!window.confirm('Marcar esta ocorrência como resolvida?')) return;
-
-    setResolvingId(id);
-    await supabase
-      .from('incidents')
-      .update({ status: 'resolved', resolved_at: new Date().toISOString() })
-      .eq('id', id);
-
-    await loadIncidents();
-    onResolved();
-    setResolvingId(null);
+  function handleResolve(id: string) {
+    setResolvingIncident({ id });
   }
 
   if (loading) {
@@ -73,6 +83,9 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
           </div>
           <span className="text-xs text-slate-400">Tempo real</span>
         </div>
+        {viewError && (
+          <p className="px-5 pt-3 text-[11px] font-semibold text-rose-600">{viewError}</p>
+        )}
         <div className="p-5 space-y-3">
           {openIncidents.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
@@ -101,21 +114,37 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
                   {incident.notes && (
                     <p className="text-[11px] text-slate-600 italic">"{incident.notes}"</p>
                   )}
+                  {(incident.bikes?.owner_name || incident.bikes?.owner_whatsapp) && (
+                    <p className="text-[11px] text-slate-600 flex flex-wrap items-center gap-1">
+                      {incident.bikes?.owner_name && <span>{incident.bikes.owner_name}</span>}
+                      {incident.bikes?.owner_whatsapp && (
+                        <span>{incident.bikes.owner_whatsapp}</span>
+                      )}
+                    </p>
+                  )}
                   {incident.photo_url && (
                     <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded">
                       <ImageIcon className="w-3 h-3" /> Foto anexada
                     </span>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleResolve(incident.id)}
-                  disabled={resolvingId === incident.id}
-                  className="shrink-0 bg-white hover:bg-emerald-600 text-slate-700 hover:text-white border border-slate-200 hover:border-emerald-600 text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>{resolvingId === incident.id ? 'Resolvendo...' : 'Marcar Resolvida'}</span>
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleViewRegistration(incident.bike_id)}
+                    className="shrink-0 bg-white hover:bg-slate-900 text-slate-700 hover:text-white border border-slate-200 hover:border-slate-900 text-xs font-semibold px-3 py-2 rounded-xl transition-all shadow-sm"
+                  >
+                    Ver cadastro completo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleResolve(incident.id)}
+                    className="shrink-0 bg-white hover:bg-emerald-600 text-slate-700 hover:text-white border border-slate-200 hover:border-emerald-600 text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Marcar Resolvida</span>
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -152,6 +181,29 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
           )}
         </div>
       </div>
+
+      {viewingBike && (
+        <BikeDetailModal
+          bike={viewingBike}
+          onClose={() => setViewingBike(null)}
+          onSaved={async () => {
+            setViewingBike(null);
+            await loadIncidents();
+          }}
+        />
+      )}
+
+      {resolvingIncident && (
+        <ResolveIncidentModal
+          incident={resolvingIncident}
+          onClose={() => setResolvingIncident(null)}
+          onResolved={async () => {
+            setResolvingIncident(null);
+            await loadIncidents();
+            onResolved();
+          }}
+        />
+      )}
     </div>
   );
 }

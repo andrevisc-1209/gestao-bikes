@@ -3,24 +3,21 @@ import { QRCodeSVG } from 'qrcode.react';
 import { CheckCircle, Tag, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Bike } from '../../types/database';
-
-type PendingBike = Pick<
-  Bike,
-  'id' | 'unit_block' | 'owner_name' | 'brand_model' | 'color' | 'photo_url'
->;
+import BikeDetailModal from './BikeDetailModal';
 
 interface ApprovalsTabProps {
   onApproved: () => void;
 }
 
 function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
-  const [pendingBikes, setPendingBikes] = useState<PendingBike[]>([]);
+  const [pendingBikes, setPendingBikes] = useState<Bike[]>([]);
   const [loading, setLoading] = useState(true);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [assignedTag, setAssignedTag] = useState<string | null>(null);
   const [approveError, setApproveError] = useState<{ bikeId: string; message: string } | null>(
     null
   );
+  const [viewingBike, setViewingBike] = useState<Bike | null>(null);
 
   async function loadPendingBikes() {
     setLoading(true);
@@ -30,7 +27,7 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
       .eq('status', 'pending')
       .order('created_at');
 
-    setPendingBikes((data as PendingBike[] | null) ?? []);
+    setPendingBikes((data as Bike[] | null) ?? []);
     setLoading(false);
   }
 
@@ -89,7 +86,10 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
                 key={bike.id}
                 className="p-3.5 rounded-xl border border-amber-200/80 bg-amber-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
-                <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => setViewingBike(bike)}
+                >
                   {bike.photo_url ? (
                     <img
                       src={bike.photo_url}
@@ -112,7 +112,10 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
                 <div className="shrink-0 flex flex-col items-end gap-1.5">
                   <button
                     type="button"
-                    onClick={() => handleApprove(bike.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleApprove(bike.id);
+                    }}
                     disabled={approvingId === bike.id}
                     className="shrink-0 bg-white hover:bg-emerald-600 text-slate-700 hover:text-white border border-slate-200 hover:border-emerald-600 text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
                   >
@@ -157,6 +160,17 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {viewingBike && (
+        <BikeDetailModal
+          bike={viewingBike}
+          onClose={() => setViewingBike(null)}
+          onSaved={async () => {
+            setViewingBike(null);
+            await loadPendingBikes();
+          }}
+        />
       )}
     </div>
   );

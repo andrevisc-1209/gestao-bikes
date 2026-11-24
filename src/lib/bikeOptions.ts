@@ -35,3 +35,11 @@ export const OTHER_COLOR = 'Outra cor';
 export const COLOR_OPTIONS = ['Preta', 'Branca', 'Prata', 'Vermelha', 'Azul', 'Verde', 'Amarela', 'Cinza', OTHER_COLOR];
 
 export const DEACTIVATION_REASONS = ['Mudança de endereço', 'Roubo/Furto', 'Perda', 'Venda da bicicleta', 'Outro'];
+
+export const INCIDENT_RESOLUTION_REASONS = [
+  'Bike retirada do local',
+  'Morador contatado e resolveu',
+  'Reorganizada pela administração',
+  'Falso alarme / engano',
+  'Outro',
+];
