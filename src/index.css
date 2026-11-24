@@ -5,3 +5,11 @@
 body {
   font-family: 'Inter', sans-serif;
 }
+
+@media print {
+  .sticker-print-card {
+    width: 7cm;
+    height: 3.5cm;
+    break-inside: avoid;
+  }
+}
