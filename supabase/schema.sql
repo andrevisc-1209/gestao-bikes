@@ -48,7 +48,9 @@ create table incidents (
   reporter_info text,
   status incident_status not null default 'open',
   created_at timestamptz not null default now(),
-  resolved_at timestamptz
+  resolved_at timestamptz,
+  resolution text,
+  resolution_notes text
 );
 
 -- Pool of pre-printed sticker tag numbers. Admins generate batches ahead of

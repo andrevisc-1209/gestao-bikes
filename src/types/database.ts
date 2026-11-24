@@ -40,6 +40,8 @@ export interface Incident {
   status: IncidentStatus;
   created_at: string;
   resolved_at: string | null;
+  resolution: string | null;
+  resolution_notes: string | null;
 }
 
 export interface Sticker {
