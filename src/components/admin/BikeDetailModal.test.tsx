@@ -91,6 +91,42 @@ describe('BikeDetailModal', () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
+  it('blocks saving and shows a validation error when a required field is left empty', async () => {
+    rpcMock.mockResolvedValue({ error: null });
+    const callsBefore = rpcMock.mock.calls.length;
+    const onSaved = vi.fn();
+    render(<BikeDetailModal bike={bike} onClose={vi.fn()} onSaved={onSaved} />);
+    fireEvent.click(screen.getByRole('button', { name: /editar/i }));
+    fireEvent.change(screen.getByLabelText(/marca\s*\/\s*modelo/i), { target: { value: '   ' } });
+    fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Preencha todos os campos antes de salvar.')).toBeInTheDocument();
+    });
+    expect(rpcMock.mock.calls.length).toBe(callsBefore);
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('trims whitespace-padded fields before calling the RPC', async () => {
+    rpcMock.mockResolvedValue({ error: null });
+    const onSaved = vi.fn();
+    render(<BikeDetailModal bike={bike} onClose={vi.fn()} onSaved={onSaved} />);
+    fireEvent.click(screen.getByRole('button', { name: /editar/i }));
+    fireEvent.change(screen.getByLabelText(/marca\s*\/\s*modelo/i), { target: { value: '  Caloi E-Vibe City v2  ' } });
+    fireEvent.change(screen.getByLabelText(/nome do morador/i), { target: { value: '  Mariana Costa  ' } });
+    fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
+    await waitFor(() => {
+      expect(rpcMock).toHaveBeenCalledWith('update_bike_registration', {
+        p_bike_id: 'bike-1',
+        p_unit_block: 'Bloco A • Apto 504',
+        p_owner_name: 'Mariana Costa',
+        p_owner_whatsapp: '21999990000',
+        p_brand_model: 'Caloi E-Vibe City v2',
+        p_color: 'Preta',
+      });
+    });
+    expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ brand_model: 'Caloi E-Vibe City v2', owner_name: 'Mariana Costa' }));
+  });
+
   it('discards edits and returns to read-only on Cancelar', () => {
     render(<BikeDetailModal bike={bike} onClose={vi.fn()} onSaved={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /editar/i }));

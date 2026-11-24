@@ -60,18 +60,29 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
   }
 
   async function handleSave() {
+    const trimmedApartment = apartment.trim();
+    const trimmedOwnerName = ownerName.trim();
+    const trimmedOwnerWhatsapp = ownerWhatsapp.trim();
+    const trimmedBrandModel = brandModel.trim();
+    const trimmedCustomColor = customColor.trim();
+    const p_color = color === OTHER_COLOR ? trimmedCustomColor : color;
+
+    if (!trimmedApartment || !trimmedOwnerName || !trimmedOwnerWhatsapp || !trimmedBrandModel || !p_color) {
+      setSaveError('Preencha todos os campos antes de salvar.');
+      return;
+    }
+
     setSaving(true);
     setSaveError(null);
 
-    const p_unit_block = `${block} • Apto ${apartment.trim()}`;
-    const p_color = color === OTHER_COLOR ? customColor : color;
+    const p_unit_block = `${block} • Apto ${trimmedApartment}`;
 
     const { error } = await supabase.rpc('update_bike_registration', {
       p_bike_id: bike.id,
       p_unit_block,
-      p_owner_name: ownerName,
-      p_owner_whatsapp: ownerWhatsapp,
-      p_brand_model: brandModel,
+      p_owner_name: trimmedOwnerName,
+      p_owner_whatsapp: trimmedOwnerWhatsapp,
+      p_brand_model: trimmedBrandModel,
       p_color,
     });
 
@@ -79,9 +90,9 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
       onSaved({
         ...bike,
         unit_block: p_unit_block,
-        owner_name: ownerName,
-        owner_whatsapp: ownerWhatsapp,
-        brand_model: brandModel,
+        owner_name: trimmedOwnerName,
+        owner_whatsapp: trimmedOwnerWhatsapp,
+        brand_model: trimmedBrandModel,
         color: p_color,
       });
       setEditing(false);
