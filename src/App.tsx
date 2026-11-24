@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import PublicBikePage from './pages/PublicBikePage'
 import RegisterPage from './pages/RegisterPage'
+import OccurrenceEntryPage from './pages/OccurrenceEntryPage'
 import LoginPage from './pages/LoginPage'
 import AdminPage from './pages/AdminPage'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -13,6 +14,7 @@ function App() {
         <Routes>
           <Route path="/b/:tagNumber" element={<PublicBikePage />} />
           <Route path="/cadastro" element={<RegisterPage />} />
+          <Route path="/ocorrencia" element={<OccurrenceEntryPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/admin"
