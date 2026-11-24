@@ -72,7 +72,7 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-slate-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800 print:hidden">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-row items-center justify-between gap-2">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-row flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-500/20 border border-emerald-500/40 p-2 rounded-xl text-emerald-400">
               <BikeIcon className="w-6 h-6" />
@@ -83,7 +83,7 @@ function AdminPage() {
             </div>
           </div>
 
-          <nav className="flex-1 md:flex-none flex items-center justify-start md:justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
+          <nav className="order-last w-full flex-none sm:order-none sm:w-auto sm:flex-1 md:flex-none flex items-center justify-start md:justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;

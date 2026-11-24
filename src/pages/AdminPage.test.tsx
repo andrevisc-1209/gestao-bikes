@@ -82,7 +82,15 @@ describe('AdminPage refresh', () => {
     expect(screen.getByText('occurrences-fake')).toBeInTheDocument();
   });
 
-  it('still switches tabs', async () => {
+  it('puts the nav on its own full-width row below sm', () => {
+    render(<AdminPage />);
+    const nav = screen.getByRole('button', { name: 'Frota' }).closest('nav')!;
+    expect(nav.className).toContain('order-last');
+    expect(nav.className).toContain('w-full');
+    expect(nav.className).toContain('sm:order-none');
+  });
+
+  it('still switches tabs',async () => {
     render(<AdminPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Aprovações' }));
     await screen.findByText('approvals-fake');
