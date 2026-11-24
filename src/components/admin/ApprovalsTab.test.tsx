@@ -5,7 +5,18 @@ import ApprovalsTab from './ApprovalsTab';
 const rpcMock = vi.hoisted(() => vi.fn().mockResolvedValue({ data: '039', error: null }));
 vi.mock('../../lib/supabase', () => ({
   supabase: {
-    from: () => ({ select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: [{ id: 'b1', unit_block: 'Bloco A', owner_name: 'X', brand_model: 'Y', color: 'Z', photo_url: null }], error: null }) }) }) }),
+    from: () => ({ select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: [{
+      id: 'b1',
+      tag_number: null,
+      unit_block: 'Bloco A',
+      owner_name: 'Mariana Costa',
+      owner_whatsapp: '11999999999',
+      brand_model: 'Y',
+      color: 'Z',
+      photo_url: null,
+      status: 'pending',
+      created_at: '2026-01-10T12:00:00Z',
+    }], error: null }) }) }) }),
     rpc: rpcMock,
   },
 }));
@@ -42,5 +53,32 @@ describe('ApprovalsTab', () => {
 
     await waitFor(() => expect(screen.getByText(/gere mais adesivos/i)).toBeInTheDocument());
     expect(screen.getByText(/aba adesivos/i)).toBeInTheDocument();
+  });
+
+  it('opens BikeDetailModal with the full pending bike when its card is clicked', async () => {
+    render(<ApprovalsTab onApproved={vi.fn()} />);
+    await screen.findByText(/mariana costa/i);
+    fireEvent.click(screen.getByText(/mariana costa/i).closest('div')!);
+    await waitFor(() => {
+      expect(screen.getByText(/cadastrado em/i)).toBeInTheDocument();
+    });
+  });
+
+  it('clicking "Atribuir Adesivo" still approves without opening the detail modal', async () => {
+    render(<ApprovalsTab onApproved={vi.fn()} />);
+    await screen.findByText(/mariana costa/i);
+    fireEvent.click(screen.getByRole('button', { name: /atribuir adesivo/i }));
+    expect(screen.queryByText(/cadastrado em/i)).not.toBeInTheDocument();
+  });
+
+  it('approving a bike while its own detail modal is open does not crash and closes cleanly', async () => {
+    render(<ApprovalsTab onApproved={vi.fn()} />);
+    await screen.findByText(/mariana costa/i);
+    fireEvent.click(screen.getByText(/mariana costa/i).closest('div')!);
+    await waitFor(() => expect(screen.getByText(/cadastrado em/i)).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /atribuir adesivo/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/cadastrado em/i)).toBeInTheDocument();
+    });
   });
 });
