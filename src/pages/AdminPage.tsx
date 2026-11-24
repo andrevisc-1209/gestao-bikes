@@ -78,7 +78,7 @@ function AdminPage() {
               <BikeIcon className="w-6 h-6" />
             </div>
             <div>
-              <span className="font-extrabold text-lg tracking-tight">Solar de Laranjeiras</span>
+              <span className="font-extrabold text-lg tracking-tight">Edifício Solar das Laranjeiras</span>
               <p className="hidden sm:block text-xs text-slate-400">Painel Administrativo</p>
             </div>
           </div>
