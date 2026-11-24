@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import type { Bike } from '../../types/database';
 import CapacityModal from './CapacityModal';
 import BikeDetailModal from './BikeDetailModal';
+import DeactivateBikeModal from './DeactivateBikeModal';
 
 type FleetBike = Pick<
   Bike,
@@ -21,10 +22,7 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
   const [bikes, setBikes] = useState<FleetBike[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
-  const [deactivateError, setDeactivateError] = useState<{ bikeId: string; message: string } | null>(
-    null
-  );
+  const [deactivatingBike, setDeactivatingBike] = useState<FleetBike | null>(null);
   const [capacityModalOpen, setCapacityModalOpen] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);
   const [viewingQrTag, setViewingQrTag] = useState<string | null>(null);
@@ -56,27 +54,6 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
       );
     });
   }, [bikes, search]);
-
-  async function handleDeactivate(bike: FleetBike) {
-    const bikeId = bike.id;
-    if (!window.confirm(`Dar baixa na bike #${bike.tag_number}? Isso libera a vaga.`)) return;
-
-    setDeactivatingId(bikeId);
-    setDeactivateError(null);
-    const { error } = await supabase.from('bikes').update({ status: 'inactive' }).eq('id', bikeId);
-
-    if (!error) {
-      onCapacityChanged();
-      await loadBikes();
-    } else {
-      setDeactivateError({
-        bikeId,
-        message: error.message || 'Não foi possível dar baixa na bicicleta. Tente novamente.',
-      });
-    }
-
-    setDeactivatingId(null);
-  }
 
   async function handleViewDetail(bike: FleetBike) {
     setDetailError(null);
@@ -207,17 +184,11 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDeactivate(bike)}
-                          disabled={deactivatingId === bike.id}
-                          className="w-full text-center text-rose-600 font-semibold text-xs py-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 transition-colors disabled:opacity-50"
+                          onClick={() => setDeactivatingBike(bike)}
+                          className="w-full text-center text-rose-600 font-semibold text-xs py-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 transition-colors"
                         >
-                          {deactivatingId === bike.id ? 'Processando...' : 'Dar Baixa'}
+                          Dar Baixa
                         </button>
-                        {deactivateError?.bikeId === bike.id && (
-                          <p className="text-[11px] font-semibold text-rose-600 mt-1">
-                            {deactivateError.message}
-                          </p>
-                        )}
                       </div>
                     )}
                   </div>
@@ -296,18 +267,12 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleDeactivate(bike)}
-                                  disabled={deactivatingId === bike.id}
-                                  className="text-slate-400 hover:text-rose-600 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors disabled:opacity-50"
+                                  onClick={() => setDeactivatingBike(bike)}
+                                  className="text-slate-400 hover:text-rose-600 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors"
                                 >
-                                  {deactivatingId === bike.id ? 'Processando...' : 'Dar Baixa'}
+                                  Dar Baixa
                                 </button>
                               </div>
-                              {deactivateError?.bikeId === bike.id && (
-                                <p className="text-[11px] font-semibold text-rose-600">
-                                  {deactivateError.message}
-                                </p>
-                              )}
                             </div>
                           )}
                         </td>
@@ -326,6 +291,18 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
           currentCapacity={currentCapacity}
           onSave={handleSaveCapacity}
           onClose={() => setCapacityModalOpen(false)}
+        />
+      )}
+
+      {deactivatingBike && (
+        <DeactivateBikeModal
+          bike={deactivatingBike}
+          onClose={() => setDeactivatingBike(null)}
+          onDeactivated={async () => {
+            setDeactivatingBike(null);
+            onCapacityChanged();
+            await loadBikes();
+          }}
         />
       )}
 
