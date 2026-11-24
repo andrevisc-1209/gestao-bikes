@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Bike as BikeIcon, LogOut, ClipboardList, UserCheck, Warehouse } from 'lucide-react';
+import { Bike as BikeIcon, LogOut, ClipboardList, UserCheck, Warehouse, Tag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import KpiCards from '../components/admin/KpiCards';
 import OccurrencesTab from '../components/admin/OccurrencesTab';
 import ApprovalsTab from '../components/admin/ApprovalsTab';
 import FleetTab from '../components/admin/FleetTab';
+import StickersTab from '../components/admin/StickersTab';
 
-type TabId = 'occurrences' | 'approvals' | 'fleet';
+type TabId = 'occurrences' | 'approvals' | 'fleet' | 'stickers';
 
 const TABS: { id: TabId; label: string; icon: typeof ClipboardList }[] = [
   { id: 'occurrences', label: 'Ocorrências', icon: ClipboardList },
   { id: 'approvals', label: 'Aprovações', icon: UserCheck },
   { id: 'fleet', label: 'Frota', icon: Warehouse },
+  { id: 'stickers', label: 'Adesivos', icon: Tag },
 ];
 
 interface KpiCounts {
@@ -78,7 +80,7 @@ function AdminPage() {
             </div>
           </div>
 
-          <nav className="flex-1 md:flex-none flex items-center justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
+          <nav className="flex-1 md:flex-none flex items-center justify-start md:justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -130,6 +132,7 @@ function AdminPage() {
             onCapacityChanged={refreshKpiCounts}
           />
         )}
+        {activeTab === 'stickers' && <StickersTab />}
       </main>
     </div>
   );
