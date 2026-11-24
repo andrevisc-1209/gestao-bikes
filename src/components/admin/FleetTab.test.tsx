@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import FleetTab from './FleetTab';
 
 const updateMock = vi.fn(() => ({ eq: () => Promise.resolve({ error: null }) }));
@@ -147,5 +147,21 @@ describe('FleetTab', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Updated Brand').length).toBeGreaterThan(0);
     });
+  });
+
+  it('shows "Ver cadastro completo" and "Ver QR" for an inactive bike, but not "Dar Baixa"', async () => {
+    fleetListData = [{ ...fleetListData[0], status: 'inactive' }];
+    render(<FleetTab />);
+    await waitFor(() => expect(screen.getAllByText(/Inativa/).length).toBeGreaterThan(0));
+
+    const rows = [
+      screen.getByRole('table').querySelector('tbody tr') as HTMLElement,
+      screen.getAllByText(/Inativa/)[0].closest('div.p-4') as HTMLElement,
+    ];
+    for (const row of rows) {
+      expect(within(row).getByText('Ver cadastro completo')).toBeInTheDocument();
+      expect(within(row).getByText('Ver QR')).toBeInTheDocument();
+      expect(within(row).queryByText('Dar Baixa')).not.toBeInTheDocument();
+    }
   });
 });
