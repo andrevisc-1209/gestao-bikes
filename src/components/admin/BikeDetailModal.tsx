@@ -86,7 +86,7 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
       });
       setEditing(false);
     } else {
-      setSaveError('Não foi possível salvar as alterações. Tente novamente.');
+      setSaveError(error.message || 'Não foi possível salvar as alterações. Tente novamente.');
     }
 
     setSaving(false);

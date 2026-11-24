@@ -74,6 +74,18 @@ describe('BikeDetailModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /editar/i }));
     fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
     await waitFor(() => {
+      expect(screen.getByText('bike not found')).toBeInTheDocument();
+    });
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('shows the generic fallback message when the RPC error has no message', async () => {
+    rpcMock.mockResolvedValue({ error: {} });
+    const onSaved = vi.fn();
+    render(<BikeDetailModal bike={bike} onClose={vi.fn()} onSaved={onSaved} />);
+    fireEvent.click(screen.getByRole('button', { name: /editar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
+    await waitFor(() => {
       expect(screen.getByText(/não foi possível salvar/i)).toBeInTheDocument();
     });
     expect(onSaved).not.toHaveBeenCalled();
