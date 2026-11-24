@@ -29,15 +29,18 @@ export function formatBrazilPhone(digits: string): string {
 }
 
 /**
- * Formats a stored phone for read-only display. Only 10/11-digit values are
- * formatted; anything else (legacy or odd data) is shown as stored, trimmed,
+ * Formats a stored phone for read-only display. 11 digits -> mobile
+ * (XX) XXXXX-XXXX, 10 digits -> landline (XX) XXXX-XXXX; anything else (legacy or odd data) is shown as stored, trimmed,
  * so it is never truncated.
  */
 export function formatPhoneForDisplay(stored: string | null | undefined): string {
   if (!stored) return '';
   const digits = stored.replace(/\D/g, '');
-  if (digits.length === 10 || digits.length === 11) {
+  if (digits.length === 11) {
     return formatBrazilPhone(digits);
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
   }
   return stored.trim();
 }

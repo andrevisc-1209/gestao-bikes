@@ -6,9 +6,8 @@ describe('formatPhoneForDisplay', () => {
     expect(formatPhoneForDisplay('21999990000')).toBe('(21) 99999-0000');
   });
 
-  it('formats a 10-digit number the same way formatBrazilPhone does', () => {
-    expect(formatPhoneForDisplay('2133334444')).toBe(formatBrazilPhone('2133334444'));
-    expect(formatPhoneForDisplay('2133334444')).toBe('(21) 33334-444');
+  it('formats a 10-digit number as a landline', () => {
+    expect(formatPhoneForDisplay('2133334444')).toBe('(21) 3333-4444');
   });
 
   it('keeps an already punctuated number the same', () => {
