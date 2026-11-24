@@ -77,7 +77,10 @@ create table bikes_history (
   status bike_status not null,
   created_at timestamptz not null,
   edited_at timestamptz not null default now(),
-  edited_by uuid references auth.users(id)
+  edited_by uuid references auth.users(id),
+  action text not null default 'edit' check (action in ('edit', 'deactivate')),
+  reason text,
+  notes text
 );
 
 -- 4. Storage --------------------------------------------------------------------
@@ -362,3 +365,52 @@ $$;
 revoke execute on function update_bike_registration(uuid,text,text,text,text,text) from public;
 revoke execute on function update_bike_registration(uuid,text,text,text,text,text) from anon;
 grant execute on function update_bike_registration(uuid,text,text,text,text,text) to authenticated;
+
+-- Deactivates a bike, snapshotting the post-deactivation row into
+-- bikes_history as a single data-modifying CTE: the update and the insert
+-- happen as one atomic, naturally-guarded statement. If p_bike_id does not
+-- exist, or the bike is already inactive, the update affects zero rows, so
+-- the CTE returns no rows, the insert...select affects zero rows, `not
+-- found` fires, and the function raises — nothing is written to either
+-- table. This also makes a double-fire (two admin tabs, a retried click)
+-- safe: the second call's update is a no-op, so it writes no second
+-- history row.
+create function deactivate_bike(
+  p_bike_id uuid,
+  p_reason text,
+  p_notes text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Defense in depth: even though EXECUTE is revoked from public/anon below,
+  -- guard against misconfigured grants by checking the caller's role here too.
+  if auth.role() != 'authenticated' then
+    raise exception 'not authorized';
+  end if;
+
+  with updated as (
+    update bikes set status = 'inactive'
+    where id = p_bike_id and status != 'inactive'
+    returning *
+  )
+  insert into bikes_history (
+    bike_id, tag_number, unit_block, owner_name, owner_whatsapp,
+    brand_model, color, photo_url, status, created_at, action, reason, notes, edited_by
+  )
+  select id, tag_number, unit_block, owner_name, owner_whatsapp,
+         brand_model, color, photo_url, status, created_at, 'deactivate', p_reason, p_notes, auth.uid()
+  from updated;
+
+  if not found then
+    raise exception 'bike not found or already inactive';
+  end if;
+end;
+$$;
+
+revoke execute on function deactivate_bike(uuid,text,text) from public;
+revoke execute on function deactivate_bike(uuid,text,text) from anon;
+grant execute on function deactivate_bike(uuid,text,text) to authenticated;

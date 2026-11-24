@@ -33,6 +33,23 @@ vi.mock('./BikeDetailModal', () => ({
   ),
 }));
 
+vi.mock('./DeactivateBikeModal', () => ({
+  default: ({
+    bike,
+    onDeactivated,
+  }: {
+    bike: { tag_number: string | null };
+    onDeactivated: () => void;
+  }) => (
+    <div>
+      <h2>Dar baixa na bike #{bike.tag_number}</h2>
+      <button type="button" onClick={onDeactivated}>
+        Confirmar
+      </button>
+    </div>
+  ),
+}));
+
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     from: () => ({
@@ -70,16 +87,17 @@ describe('FleetTab', () => {
     expect(screen.getAllByText('Bloco A').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('does not deactivate the bike when the admin cancels the confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('opens DeactivateBikeModal instead of window.confirm when "Dar Baixa" is clicked, and refreshes the list on success', async () => {
     render(<FleetTab />);
     await waitFor(() => expect(screen.getAllByText(/Caloi/).length).toBeGreaterThan(0));
 
-    const [deactivateButton] = screen.getAllByText('Dar Baixa');
-    fireEvent.click(deactivateButton);
+    fireEvent.click(screen.getAllByRole('button', { name: /dar baixa/i })[0]);
+    expect(screen.getByText(/dar baixa na bike #014/i)).toBeInTheDocument();
 
-    expect(window.confirm).toHaveBeenCalled();
-    expect(updateMock).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
+    await waitFor(() => {
+      expect(screen.queryByText(/dar baixa na bike #014/i)).not.toBeInTheDocument();
+    });
   });
 
   it('shows the QR code for an active bike when "Ver QR" is clicked', async () => {

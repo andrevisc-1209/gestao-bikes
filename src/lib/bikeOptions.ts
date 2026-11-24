@@ -33,3 +33,5 @@ export const BRAND_OPTIONS = [...Object.keys(BRAND_MODELS), OTHER_BRAND];
 
 export const OTHER_COLOR = 'Outra cor';
 export const COLOR_OPTIONS = ['Preta', 'Branca', 'Prata', 'Vermelha', 'Azul', 'Verde', 'Amarela', 'Cinza', OTHER_COLOR];
+
+export const DEACTIVATION_REASONS = ['Mudança de endereço', 'Roubo/Furto', 'Perda', 'Venda da bicicleta', 'Outro'];
