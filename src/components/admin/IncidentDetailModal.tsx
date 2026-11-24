@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { safeHttpUrl } from '../../lib/safeUrl';
+import { formatPhoneForDisplay } from '../../lib/phone';
+import ImageLightbox from '../ImageLightbox';
 import type { IncidentWithBike } from './OccurrencesTab';
 
 interface IncidentDetailModalProps {
@@ -17,6 +20,7 @@ function formatTimestamp(value: string): string {
 }
 
 function IncidentDetailModal({ incident, onClose }: IncidentDetailModalProps) {
+  const [zoomed, setZoomed] = useState(false);
   const photoUrl = safeHttpUrl(incident.photo_url);
 
   return (
@@ -39,10 +43,19 @@ function IncidentDetailModal({ incident, onClose }: IncidentDetailModalProps) {
         </div>
 
         {(incident.bikes?.owner_name || incident.bikes?.owner_whatsapp) && (
-          <p className="text-[11px] text-slate-600 flex flex-wrap items-center gap-1">
-            {incident.bikes?.owner_name && <span>{incident.bikes.owner_name}</span>}
-            {incident.bikes?.owner_whatsapp && <span>{incident.bikes.owner_whatsapp}</span>}
-          </p>
+          <div className="space-y-0.5">
+            {incident.bikes?.owner_name && (
+              <p className="text-[11px] text-slate-600">
+                <span className="font-semibold text-slate-500">Morador:</span> {incident.bikes.owner_name}
+              </p>
+            )}
+            {incident.bikes?.owner_whatsapp && (
+              <p className="text-[11px] text-slate-600">
+                <span className="font-semibold text-slate-500">WhatsApp:</span>{' '}
+                {formatPhoneForDisplay(incident.bikes.owner_whatsapp)}
+              </p>
+            )}
+          </div>
         )}
 
         <div className="space-y-1">
@@ -54,13 +67,23 @@ function IncidentDetailModal({ incident, onClose }: IncidentDetailModalProps) {
         </div>
 
         {photoUrl && (
-          <a href={photoUrl} target="_blank" rel="noopener noreferrer" className="block">
-            <img
-              src={photoUrl}
-              alt="Foto da ocorrência"
-              className="w-full max-h-72 rounded-xl object-cover border border-slate-200"
-            />
-          </a>
+          <>
+            <button
+              type="button"
+              aria-label="Ampliar foto"
+              onClick={() => setZoomed(true)}
+              className="block w-full cursor-zoom-in"
+            >
+              <img
+                src={photoUrl}
+                alt="Foto da ocorrência"
+                className="w-full max-h-72 rounded-xl object-cover border border-slate-200"
+              />
+            </button>
+            {zoomed && (
+              <ImageLightbox src={photoUrl} alt="Foto da ocorrência ampliada" onClose={() => setZoomed(false)} />
+            )}
+          </>
         )}
 
         {incident.status === 'resolved' && (

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import BikeDetailModal from './BikeDetailModal';
 import type { Bike } from '../../types/database';
 
@@ -41,8 +41,36 @@ describe('BikeDetailModal', () => {
   it('shows every field read-only by default', () => {
     render(<BikeDetailModal bike={bike} onClose={vi.fn()} onSaved={vi.fn()} />);
     expect(screen.getByText('Bloco A • Apto 504')).toBeInTheDocument();
-    expect(screen.getByText('21999990000')).toBeInTheDocument();
+    expect(screen.getByText('(21) 99999-0000')).toBeInTheDocument();
     expect(screen.getByText('Caloi E-Vibe City')).toBeInTheDocument();
+  });
+
+  it('labels the WhatsApp, bike and color lines in the read-only view', () => {
+    render(<BikeDetailModal bike={bike} onClose={vi.fn()} onSaved={vi.fn()} />);
+    expect(screen.getByText('WhatsApp:')).toBeInTheDocument();
+    expect(screen.getByText('Bike:')).toBeInTheDocument();
+    expect(screen.getByText('Cor:')).toBeInTheDocument();
+    expect(screen.getByText('Preta')).toBeInTheDocument();
+  });
+
+  it('opens the registration photo in an in-app lightbox via "Ampliar foto"', () => {
+    render(
+      <BikeDetailModal bike={{ ...bike, photo_url: 'https://example.com/bike.jpg' }} onClose={vi.fn()} onSaved={vi.fn()} />,
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Ampliar foto' }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('img')).toHaveAttribute('src', 'https://example.com/bike.jpg');
+    fireEvent.click(screen.getByLabelText('Fechar foto'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows the placeholder (no img, no zoom button) for an unsafe photo_url', () => {
+    render(
+      <BikeDetailModal bike={{ ...bike, photo_url: 'javascript:alert(1)' }} onClose={vi.fn()} onSaved={vi.fn()} />,
+    );
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ampliar foto' })).not.toBeInTheDocument();
   });
 
   it('splits unit_block into Bloco and Apartamento when editing', () => {

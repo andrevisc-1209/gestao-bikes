@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ApprovalsTab from './ApprovalsTab';
 
+const photoState = vi.hoisted(() => ({ url: null as string | null }));
 const rpcMock = vi.hoisted(() => vi.fn().mockResolvedValue({ data: '039', error: null }));
 vi.mock('../../lib/supabase', () => ({
   supabase: {
@@ -13,7 +14,7 @@ vi.mock('../../lib/supabase', () => ({
       owner_whatsapp: '11999999999',
       brand_model: 'Y',
       color: 'Z',
-      photo_url: null,
+      photo_url: photoState.url,
       status: 'pending',
       created_at: '2026-01-10T12:00:00Z',
     }], error: null }) }) }) }),
@@ -22,6 +23,21 @@ vi.mock('../../lib/supabase', () => ({
 }));
 
 describe('ApprovalsTab', () => {
+  it('renders no img for an unsafe javascript: photo_url, and shows a safe one', async () => {
+    photoState.url = 'javascript:alert(1)';
+    try {
+      const { unmount } = render(<ApprovalsTab onApproved={() => {}} />);
+      await waitFor(() => screen.getByText(/Bloco A/));
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
+      unmount();
+      photoState.url = 'https://example.com/b.jpg';
+      render(<ApprovalsTab onApproved={() => {}} />);
+      expect(await screen.findByRole('img')).toHaveAttribute('src', 'https://example.com/b.jpg');
+    } finally {
+      photoState.url = null;
+    }
+  });
+
   it('calls approve_bike RPC with the bike id when approving', async () => {
     render(<ApprovalsTab onApproved={() => {}} />);
     await waitFor(() => screen.getByText(/Bloco A/));

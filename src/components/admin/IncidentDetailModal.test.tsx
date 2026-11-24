@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import IncidentDetailModal from './IncidentDetailModal';
 
 const openIncident = {
@@ -38,11 +38,22 @@ describe('IncidentDetailModal', () => {
     expect(screen.getByText(/Perto da entrada/)).toBeInTheDocument();
     expect(screen.getByText(/reportado em/i)).toBeInTheDocument();
     expect(screen.getByText('Mariana Costa')).toBeInTheDocument();
-    expect(screen.getByText('21999990000')).toBeInTheDocument();
+    expect(screen.getByText('Morador:')).toBeInTheDocument();
+    expect(screen.getByText('WhatsApp:')).toBeInTheDocument();
+    expect(screen.getByText('(21) 99999-0000')).toBeInTheDocument();
     const img = screen.getByRole('img', { name: /foto da ocorrência/i });
     expect(img).toHaveAttribute('src', 'https://example.com/photo.jpg');
-    expect(img.closest('a')).toHaveAttribute('href', 'https://example.com/photo.jpg');
-    expect(img.closest('a')).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(img.closest('a')).toBeNull();
+  });
+
+  it('opens the photo in an in-app lightbox when "Ampliar foto" is clicked, and closes it', () => {
+    render(<IncidentDetailModal incident={openIncident} onClose={vi.fn()} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Ampliar foto' }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('img')).toHaveAttribute('src', 'https://example.com/photo.jpg');
+    fireEvent.click(screen.getByLabelText('Fechar foto'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('does not show any resolution section for an open incident', () => {
@@ -71,6 +82,7 @@ describe('IncidentDetailModal', () => {
     );
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ampliar foto' })).not.toBeInTheDocument();
   });
 
   it('calls onClose when the close button is clicked', () => {

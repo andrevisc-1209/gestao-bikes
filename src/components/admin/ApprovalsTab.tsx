@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { CheckCircle, Tag, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { safeHttpUrl } from '../../lib/safeUrl';
 import type { Bike } from '../../types/database';
 import BikeDetailModal from './BikeDetailModal';
 
@@ -90,9 +91,9 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
                   className="flex items-center gap-3 cursor-pointer"
                   onClick={() => setViewingBike(bike)}
                 >
-                  {bike.photo_url ? (
+                  {safeHttpUrl(bike.photo_url) ? (
                     <img
-                      src={bike.photo_url}
+                      src={safeHttpUrl(bike.photo_url) ?? undefined}
                       alt={bike.brand_model}
                       className="w-12 h-12 rounded-lg object-cover border border-slate-200"
                     />

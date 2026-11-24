@@ -3,7 +3,9 @@ import { Bike as BikeIcon, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Bike } from '../../types/database';
 import { BLOCK_OPTIONS, COLOR_OPTIONS, OTHER_COLOR } from '../../lib/bikeOptions';
-import { formatBrazilPhone } from '../../lib/phone';
+import { formatBrazilPhone, formatPhoneForDisplay } from '../../lib/phone';
+import { safeHttpUrl } from '../../lib/safeUrl';
+import ImageLightbox from '../ImageLightbox';
 
 interface BikeDetailModalProps {
   bike: Bike;
@@ -40,6 +42,8 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [zoomed, setZoomed] = useState(false);
+  const photoUrl = safeHttpUrl(bike.photo_url);
 
   const initialSplit = splitUnitBlock(bike.unit_block);
   const initialColorKnown = COLOR_OPTIONS.includes(bike.color) && bike.color !== OTHER_COLOR;
@@ -166,12 +170,19 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
         {!editing ? (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              {bike.photo_url ? (
-                <img
-                  src={bike.photo_url}
-                  alt={bike.brand_model}
-                  className="w-16 h-16 rounded-lg object-cover border border-slate-200"
-                />
+              {photoUrl ? (
+                <button
+                  type="button"
+                  aria-label="Ampliar foto"
+                  onClick={() => setZoomed(true)}
+                  className="shrink-0 cursor-zoom-in"
+                >
+                  <img
+                    src={photoUrl}
+                    alt={bike.brand_model}
+                    className="w-16 h-16 rounded-lg object-cover border border-slate-200"
+                  />
+                </button>
               ) : (
                 <div className="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
                   <BikeIcon className="w-6 h-6" />
@@ -183,10 +194,20 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
               </div>
             </div>
             <div className="space-y-1 text-sm text-slate-700">
-              <p>{bike.owner_whatsapp}</p>
-              <p>{bike.brand_model}</p>
-              <p>{bike.color}</p>
+              <p>
+                <span className="font-semibold text-slate-500">WhatsApp:</span>{' '}
+                {formatPhoneForDisplay(bike.owner_whatsapp)}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-500">Bike:</span> {bike.brand_model}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-500">Cor:</span> {bike.color}
+              </p>
             </div>
+            {zoomed && photoUrl && (
+              <ImageLightbox src={photoUrl} alt={bike.brand_model} onClose={() => setZoomed(false)} />
+            )}
             <div className="space-y-0.5 text-xs text-slate-500">
               <p>Cadastrado em: {formatTimestamp(bike.created_at)}</p>
               {deactivation && (
