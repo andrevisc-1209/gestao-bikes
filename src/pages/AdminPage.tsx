@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Bike as BikeIcon, LogOut, ClipboardList, UserCheck, Warehouse, Tag } from 'lucide-react';
+import { Bike as BikeIcon, LogOut, RefreshCw, ClipboardList, UserCheck, Warehouse, Tag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import KpiCards from '../components/admin/KpiCards';
@@ -37,6 +37,9 @@ function AdminPage() {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>('occurrences');
   const [kpiCounts, setKpiCounts] = useState<KpiCounts>(EMPTY_KPI_COUNTS);
+  // Bumped by the "Atualizar" button; part of the active tab's key so the tab
+  // remounts and re-runs its own initial load.
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // refreshKpiCounts: refetches the four KPI numbers from Supabase.
   // Tasks 8/9 should call this (e.g. via an onApproved callback) whenever
@@ -103,15 +106,29 @@ function AdminPage() {
             })}
           </nav>
 
-          <button
-            type="button"
-            onClick={() => signOut()}
-            aria-label="Sair"
-            className="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Sair</span>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                refreshKpiCounts();
+                setRefreshKey((k) => k + 1);
+              }}
+              aria-label="Atualizar"
+              className="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Atualizar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => signOut()}
+              aria-label="Sair"
+              className="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sair</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -125,16 +142,21 @@ function AdminPage() {
           />
         </div>
 
-        {activeTab === 'occurrences' && <OccurrencesTab onResolved={refreshKpiCounts} />}
-        {activeTab === 'approvals' && <ApprovalsTab onApproved={refreshKpiCounts} />}
+        {activeTab === 'occurrences' && (
+          <OccurrencesTab key={`${activeTab}-${refreshKey}`} onResolved={refreshKpiCounts} />
+        )}
+        {activeTab === 'approvals' && (
+          <ApprovalsTab key={`${activeTab}-${refreshKey}`} onApproved={refreshKpiCounts} />
+        )}
         {activeTab === 'fleet' && (
           <FleetTab
+            key={`${activeTab}-${refreshKey}`}
             currentCapacity={kpiCounts.totalCapacity}
             settingsId={kpiCounts.settingsId ?? undefined}
             onCapacityChanged={refreshKpiCounts}
           />
         )}
-        {activeTab === 'stickers' && <StickersTab />}
+        {activeTab === 'stickers' && <StickersTab key={`${activeTab}-${refreshKey}`} />}
       </main>
     </div>
   );
