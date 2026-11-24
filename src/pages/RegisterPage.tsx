@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ClipboardList, Bike as BikeIcon, CheckCircle2, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressAndUpload } from '../lib/imageCompression';
 import PhotoAttachField from '../components/PhotoAttachField';
+import PublicNavTabs from '../components/PublicNavTabs';
 import { BLOCK_OPTIONS, OTHER_BRAND, OTHER_MODEL, BRAND_MODELS, BRAND_OPTIONS, OTHER_COLOR, COLOR_OPTIONS } from '../lib/bikeOptions';
 
 function RegisterPage() {
-  const navigate = useNavigate();
-  const [reportTag, setReportTag] = useState('');
   const [block, setBlock] = useState(BLOCK_OPTIONS[0]);
   const [apartment, setApartment] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
@@ -85,13 +83,10 @@ function RegisterPage() {
     setSubmitted(true);
   }
 
-  function handleReportSubmit() {
-    navigate(`/b/${reportTag.trim().padStart(3, '0')}`);
-  }
-
   if (submitted) {
     return (
       <div className="max-w-2xl mx-auto p-5">
+        <PublicNavTabs active="cadastro" />
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
           <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto mb-3" />
           <h1 className="font-bold text-slate-800 text-sm mb-1">Cadastro enviado!</h1>
@@ -106,6 +101,7 @@ function RegisterPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-5">
+      <PublicNavTabs active="cadastro" />
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="bg-slate-900 text-white p-6">
           <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">
@@ -318,35 +314,6 @@ function RegisterPage() {
             <span>{submitting ? 'Enviando...' : 'Enviar Cadastro e Solicitar Adesivo'}</span>
           </button>
         </form>
-
-        <div className="px-6 pb-6 pt-3 border-t border-slate-100 text-left">
-          <p className="text-xs text-slate-400 mb-2">
-            Já tem uma bike cadastrada? Reporte um problema
-          </p>
-          <label
-            htmlFor="reg-report-tag"
-            className="block text-xs font-medium text-slate-500 mb-1"
-          >
-            Número do adesivo
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              id="reg-report-tag"
-              placeholder="Ex: 7"
-              value={reportTag}
-              onChange={(e) => setReportTag(e.target.value)}
-              className="flex-1 text-sm px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            />
-            <button
-              type="button"
-              onClick={handleReportSubmit}
-              className="text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-colors"
-            >
-              Reportar um problema
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
