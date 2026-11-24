@@ -21,11 +21,9 @@ export function formatBrazilPhone(digits: string): string {
   const areaCode = cleaned.slice(0, 2);
   const rest = cleaned.slice(2);
 
-  if (rest.length < 9) {
-    return `(${areaCode}) ${rest.slice(0, 5)}`;
+  if (rest.length <= 5) {
+    return `(${areaCode}) ${rest}`;
   }
 
-  const firstPart = rest.slice(0, 5);
-  const lastPart = rest.slice(5, 9);
-  return `(${areaCode}) ${firstPart}-${lastPart}`;
+  return `(${areaCode}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
 }
