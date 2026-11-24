@@ -24,6 +24,24 @@ describe('StickersTab', () => {
 
     await waitFor(() => expect(rpcMock).toHaveBeenCalledWith('generate_sticker_batch', { p_count: 5 }));
     await waitFor(() => expect(selectMock).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(screen.getByText(/5 adesivos gerados com sucesso\./i)).toBeInTheDocument()
+    );
+  });
+
+  it('warns when fewer stickers were created than requested due to conflicts', async () => {
+    rpcMock.mockResolvedValueOnce({ data: 3, error: null });
+    render(<StickersTab />);
+    await waitFor(() => expect(selectMock).toHaveBeenCalled());
+
+    fireEvent.change(screen.getByLabelText(/quantidade/i), { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: /gerar lote/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/3 de 5 adesivos gerados \(alguns números já existiam e foram ignorados\)\./i)
+      ).toBeInTheDocument()
+    );
   });
 
   it('shows the count of available stickers and a printable card per sticker', async () => {

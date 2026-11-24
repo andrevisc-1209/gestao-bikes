@@ -67,7 +67,7 @@ begin
   ),
   inserted as (
     insert into stickers (tag_number)
-    select lpad((seed + i)::text, 3, '0')
+    select lpad((seed + i)::text, greatest(3, length((seed + i)::text)), '0')
     from next_seed, generate_series(1, p_count) as i
     -- Belt-and-suspenders: if a tag number somehow already exists, skip it
     -- instead of aborting the whole batch, and report the real count created.

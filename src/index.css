@@ -11,5 +11,7 @@ body {
     width: 7cm;
     height: 3.5cm;
     break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

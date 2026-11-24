@@ -10,6 +10,7 @@ function StickersTab() {
   const [quantity, setQuantity] = useState(20);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [generateMessage, setGenerateMessage] = useState<string | null>(null);
 
   async function loadStickers() {
     setLoading(true);
@@ -30,9 +31,18 @@ function StickersTab() {
   async function handleGenerate() {
     setGenerating(true);
     setGenerateError(null);
-    const { error } = await supabase.rpc('generate_sticker_batch', { p_count: quantity });
+    setGenerateMessage(null);
+    const { data, error } = await supabase.rpc('generate_sticker_batch', { p_count: quantity });
 
     if (!error) {
+      const created = (data as number | null) ?? 0;
+      if (created < quantity) {
+        setGenerateMessage(
+          `${created} de ${quantity} adesivos gerados (alguns números já existiam e foram ignorados).`
+        );
+      } else {
+        setGenerateMessage(`${created} adesivos gerados com sucesso.`);
+      }
       await loadStickers();
     } else {
       setGenerateError(error.message || 'Não foi possível gerar o lote. Tente novamente.');
@@ -85,6 +95,9 @@ function StickersTab() {
           {generateError && (
             <p className="text-[11px] font-semibold text-rose-600">{generateError}</p>
           )}
+          {generateMessage && (
+            <p className="text-[11px] font-semibold text-emerald-600">{generateMessage}</p>
+          )}
         </div>
       </div>
 
@@ -108,7 +121,7 @@ function StickersTab() {
               Nenhum adesivo disponível. Gere um novo lote acima.
             </p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 print:grid-cols-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 print:grid-cols-2">
               {availableStickers.map((sticker) => (
                 <div
                   key={sticker.tag_number}
