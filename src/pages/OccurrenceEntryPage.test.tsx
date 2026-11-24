@@ -17,8 +17,10 @@ vi.mock('html5-qrcode', () => ({
   Html5Qrcode: vi.fn().mockImplementation(() => ({
     start: (...args: unknown[]) => {
       capturedOnSuccess = args[2] as (decodedText: string) => void;
-      startMock(...args);
-      return Promise.resolve();
+      // Propagate startMock's return value (sync throw stays a sync throw;
+      // a resolved/rejected promise is passed through) instead of always
+      // resolving, so tests can exercise both start() failure modes.
+      return Promise.resolve(startMock(...args));
     },
     stop: stopMock,
   })),
@@ -109,5 +111,49 @@ describe('OccurrenceEntryPage', () => {
     unmount();
 
     await waitFor(() => expect(stopMock).toHaveBeenCalled());
+  });
+
+  it('does not crash when stop() throws synchronously on unmount after a failed start()', async () => {
+    startMock.mockImplementationOnce(() => { throw new Error('Permission denied'); });
+    stopMock.mockImplementationOnce(() => {
+      throw new Error('Cannot stop, scanner is not running or paused.');
+    });
+
+    const { unmount } = renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /ativar câmera/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/não foi possível acessar a câmera/i)).toBeInTheDocument();
+    });
+
+    expect(() => unmount()).not.toThrow();
+  });
+
+  it('keeps the manual input usable and shows an error when start() rejects (e.g. permission denied)', async () => {
+    startMock.mockImplementationOnce(() => Promise.reject(new Error('Permission denied')));
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /ativar câmera/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/não foi possível acessar a câmera/i)).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText(/número do adesivo/i)).toBeEnabled();
+    fireEvent.change(screen.getByLabelText(/número do adesivo/i), { target: { value: '9' } });
+    fireEvent.click(screen.getByRole('button', { name: /ver ocorrência/i }));
+    expect(navigateMock).toHaveBeenCalledWith('/b/009');
+  });
+
+  it('ignores a second successful scan and only navigates once', async () => {
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /ativar câmera/i }));
+    await waitFor(() => expect(startMock).toHaveBeenCalled());
+
+    capturedOnSuccess?.('https://andrevisc-1209.github.io/gestao-bikes/#/b/014');
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/b/014'));
+
+    capturedOnSuccess?.('https://andrevisc-1209.github.io/gestao-bikes/#/b/099');
+
+    expect(navigateMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -15,7 +15,7 @@ function PublicNavTabs({ active }: PublicNavTabsProps) {
   const navigate = useNavigate();
 
   return (
-    <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit">
+    <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit mb-4">
       {TABS.map((tab) => {
         const isActive = tab.id === active;
         return (
