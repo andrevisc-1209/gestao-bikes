@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bike as BikeIcon, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Bike } from '../../types/database';
@@ -9,6 +9,21 @@ interface BikeDetailModalProps {
   bike: Bike;
   onClose: () => void;
   onSaved: (updated: Bike) => void;
+}
+
+interface DeactivationInfo {
+  edited_at: string;
+  reason: string | null;
+  notes: string | null;
+}
+
+function formatTimestamp(value: string): string {
+  return new Date(value).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 const UNIT_BLOCK_PATTERN = /^(.*) • Apto (.*)$/;
@@ -29,6 +44,8 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
   const initialSplit = splitUnitBlock(bike.unit_block);
   const initialColorKnown = COLOR_OPTIONS.includes(bike.color) && bike.color !== OTHER_COLOR;
 
+  const [deactivation, setDeactivation] = useState<DeactivationInfo | null>(null);
+
   const [block, setBlock] = useState(initialSplit.block);
   const [apartment, setApartment] = useState(initialSplit.apartment);
   const [ownerName, setOwnerName] = useState(bike.owner_name);
@@ -36,6 +53,36 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
   const [brandModel, setBrandModel] = useState(bike.brand_model);
   const [color, setColor] = useState(initialColorKnown ? bike.color : OTHER_COLOR);
   const [customColor, setCustomColor] = useState(initialColorKnown ? '' : bike.color);
+
+  useEffect(() => {
+    setDeactivation(null);
+    if (bike.status !== 'inactive') {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadDeactivation() {
+      const { data, error } = await supabase
+        .from('bikes_history')
+        .select('edited_at, reason, notes')
+        .eq('bike_id', bike.id)
+        .eq('action', 'deactivate')
+        .order('edited_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!cancelled) {
+        setDeactivation(!error && data ? data : null);
+      }
+    }
+
+    loadDeactivation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bike.id, bike.status]);
 
   function resetEditState() {
     const split = splitUnitBlock(bike.unit_block);
@@ -139,6 +186,18 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
               <p>{bike.owner_whatsapp}</p>
               <p>{bike.brand_model}</p>
               <p>{bike.color}</p>
+            </div>
+            <div className="space-y-0.5 text-xs text-slate-500">
+              <p>Cadastrado em: {formatTimestamp(bike.created_at)}</p>
+              {deactivation && (
+                <>
+                  <p>Baixa em: {formatTimestamp(deactivation.edited_at)}</p>
+                  <p>
+                    Motivo: <span>{deactivation.reason}</span>
+                  </p>
+                  {deactivation.notes && <p>{deactivation.notes}</p>}
+                </>
+              )}
             </div>
             <button
               type="button"
