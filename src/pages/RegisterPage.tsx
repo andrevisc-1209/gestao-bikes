@@ -317,36 +317,36 @@ function RegisterPage() {
             <Check className="w-4 h-4" />
             <span>{submitting ? 'Enviando...' : 'Enviar Cadastro e Solicitar Adesivo'}</span>
           </button>
-
-          <div className="pt-3 border-t border-slate-100 text-left">
-            <p className="text-xs text-slate-400 mb-2">
-              Já tem uma bike cadastrada? Reporte um problema
-            </p>
-            <label
-              htmlFor="reg-report-tag"
-              className="block text-xs font-medium text-slate-500 mb-1"
-            >
-              Número do adesivo
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                id="reg-report-tag"
-                placeholder="Ex: 7"
-                value={reportTag}
-                onChange={(e) => setReportTag(e.target.value)}
-                className="flex-1 text-sm px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400"
-              />
-              <button
-                type="button"
-                onClick={handleReportSubmit}
-                className="text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-colors"
-              >
-                Reportar um problema
-              </button>
-            </div>
-          </div>
         </form>
+
+        <div className="px-6 pb-6 pt-3 border-t border-slate-100 text-left">
+          <p className="text-xs text-slate-400 mb-2">
+            Já tem uma bike cadastrada? Reporte um problema
+          </p>
+          <label
+            htmlFor="reg-report-tag"
+            className="block text-xs font-medium text-slate-500 mb-1"
+          >
+            Número do adesivo
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              id="reg-report-tag"
+              placeholder="Ex: 7"
+              value={reportTag}
+              onChange={(e) => setReportTag(e.target.value)}
+              className="flex-1 text-sm px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            />
+            <button
+              type="button"
+              onClick={handleReportSubmit}
+              className="text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-colors"
+            >
+              Reportar um problema
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

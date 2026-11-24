@@ -84,4 +84,13 @@ describe('RegisterPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /reportar um problema/i }));
     expect(navigateMock).toHaveBeenCalledWith('/b/012');
   });
+
+  it('pressing Enter in the número do adesivo field does not submit the cadastro form', () => {
+    render(<RegisterPage />);
+    fireEvent.change(screen.getByLabelText(/número do adesivo/i), { target: { value: '7' } });
+    fireEvent.keyDown(screen.getByLabelText(/número do adesivo/i), { key: 'Enter', code: 'Enter' });
+
+    expect(insertMock).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
 });
