@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, CheckCircle, Image as ImageIcon } from 'lucide-react';
+import { Check, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Bike, Incident } from '../../types/database';
 import BikeDetailModal from './BikeDetailModal';
@@ -123,9 +123,15 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
                     </p>
                   )}
                   {incident.photo_url && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded">
-                      <ImageIcon className="w-3 h-3" /> Foto anexada
-                    </span>
+                    <img
+                      src={incident.photo_url}
+                      alt="Foto da ocorrência"
+                      className="w-12 h-12 rounded-lg object-cover border border-slate-200 cursor-pointer"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        window.open(incident.photo_url!, '_blank', 'noopener,noreferrer');
+                      }}
+                    />
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 shrink-0">

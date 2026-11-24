@@ -47,6 +47,22 @@ vi.mock('../../lib/supabase', () => ({
                     owner_whatsapp: '21999990000',
                   },
                 },
+                {
+                  id: '2',
+                  bike_id: '2',
+                  reason: 'Roda torta',
+                  notes: null,
+                  photo_url: 'https://example.com/foto.jpg',
+                  status: 'open',
+                  created_at: '2026-11-02T10:00:00Z',
+                  resolved_at: null,
+                  bikes: {
+                    tag_number: '015',
+                    unit_block: 'Bloco B',
+                    owner_name: 'Carlos Lima',
+                    owner_whatsapp: '21988880000',
+                  },
+                },
               ],
               error: null,
             }),
@@ -89,9 +105,31 @@ describe('OccurrencesTab', () => {
   it('opens BikeDetailModal with the full bike when "Ver cadastro completo" is clicked', async () => {
     render(<OccurrencesTab />);
     await waitFor(() => expect(screen.getByText('Mariana Costa')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /ver cadastro completo/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /ver cadastro completo/i })[0]);
     await waitFor(() => {
       expect(screen.getByText(/cadastrado em/i)).toBeInTheDocument();
     });
+  });
+
+  it('shows a clickable photo thumbnail instead of just a "Foto anexada" badge when an incident has a photo', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    render(<OccurrencesTab />);
+    const img = await screen.findByRole('img', { name: /foto da ocorrência/i });
+    expect(img).toHaveAttribute('src', 'https://example.com/foto.jpg');
+    expect(screen.queryByText(/foto anexada/i)).not.toBeInTheDocument();
+    const parentClick = vi.fn();
+    document.addEventListener('click', parentClick);
+    fireEvent.click(img);
+    document.removeEventListener('click', parentClick);
+    expect(openSpy).toHaveBeenCalledWith('https://example.com/foto.jpg', '_blank', 'noopener,noreferrer');
+    expect(parentClick).not.toHaveBeenCalled();
+    openSpy.mockRestore();
+  });
+
+  it('shows no photo element at all for an incident with no photo_url', async () => {
+    render(<OccurrencesTab />);
+    await waitFor(() => expect(screen.getByText('Mariana Costa')).toBeInTheDocument());
+    // only the one incident that has a photo renders a thumbnail
+    expect(screen.getAllByRole('img', { name: /foto da ocorrência/i })).toHaveLength(1);
   });
 });
