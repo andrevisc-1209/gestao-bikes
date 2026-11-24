@@ -1,5 +1,30 @@
 import { describe, it, expect } from 'vitest';
-import { formatBrazilPhone } from './phone';
+import { formatBrazilPhone, formatPhoneForDisplay } from './phone';
+
+describe('formatPhoneForDisplay', () => {
+  it('formats an 11-digit number', () => {
+    expect(formatPhoneForDisplay('21999990000')).toBe('(21) 99999-0000');
+  });
+
+  it('formats a 10-digit number the same way formatBrazilPhone does', () => {
+    expect(formatPhoneForDisplay('2133334444')).toBe(formatBrazilPhone('2133334444'));
+    expect(formatPhoneForDisplay('2133334444')).toBe('(21) 33334-444');
+  });
+
+  it('keeps an already punctuated number the same', () => {
+    expect(formatPhoneForDisplay('(21) 99999-0000')).toBe('(21) 99999-0000');
+  });
+
+  it('returns odd-length legacy data unchanged (not truncated)', () => {
+    expect(formatPhoneForDisplay('5555555555555555')).toBe('5555555555555555');
+  });
+
+  it('returns an empty string for empty or nullish input', () => {
+    expect(formatPhoneForDisplay('')).toBe('');
+    expect(formatPhoneForDisplay(null)).toBe('');
+    expect(formatPhoneForDisplay(undefined)).toBe('');
+  });
+});
 
 describe('formatBrazilPhone', () => {
   it('formats a full 11-digit number', () => {

@@ -2,24 +2,32 @@ import { useEffect, useState } from 'react';
 import { Check, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { safeHttpUrl } from '../../lib/safeUrl';
+import { formatPhoneForDisplay } from '../../lib/phone';
+import ImageLightbox from '../ImageLightbox';
 import type { Bike, Incident } from '../../types/database';
 import BikeDetailModal from './BikeDetailModal';
 import ResolveIncidentModal from './ResolveIncidentModal';
 import IncidentDetailModal from './IncidentDetailModal';
 
 function IncidentThumbnail({ photoUrl }: { photoUrl: string | null | undefined }) {
+  const [open, setOpen] = useState(false);
   const safe = safeHttpUrl(photoUrl);
   if (!safe) return null;
   return (
-    <img
-      src={safe}
-      alt="Foto da ocorrência"
-      className="w-12 h-12 rounded-lg object-cover border border-slate-200 cursor-pointer"
-      onClick={(event) => {
-        event.stopPropagation();
-        window.open(safe, '_blank', 'noopener,noreferrer');
-      }}
-    />
+    <>
+      <img
+        src={safe}
+        alt="Foto da ocorrência"
+        className="w-12 h-12 rounded-lg object-cover border border-slate-200 cursor-pointer"
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen(true);
+        }}
+      />
+      {open && (
+        <ImageLightbox src={safe} alt="Foto da ocorrência ampliada" onClose={() => setOpen(false)} />
+      )}
+    </>
   );
 }
 
@@ -136,12 +144,15 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
                   {incident.notes && (
                     <p className="text-[11px] text-slate-600 italic">"{incident.notes}"</p>
                   )}
-                  {(incident.bikes?.owner_name || incident.bikes?.owner_whatsapp) && (
-                    <p className="text-[11px] text-slate-600 flex flex-wrap items-center gap-1">
-                      {incident.bikes?.owner_name && <span>{incident.bikes.owner_name}</span>}
-                      {incident.bikes?.owner_whatsapp && (
-                        <span>{incident.bikes.owner_whatsapp}</span>
-                      )}
+                  {incident.bikes?.owner_name && (
+                    <p className="text-[11px] text-slate-600">
+                      <span className="font-semibold text-slate-500">Morador:</span> {incident.bikes.owner_name}
+                    </p>
+                  )}
+                  {incident.bikes?.owner_whatsapp && (
+                    <p className="text-[11px] text-slate-600">
+                      <span className="font-semibold text-slate-500">WhatsApp:</span>{' '}
+                      {formatPhoneForDisplay(incident.bikes.owner_whatsapp)}
                     </p>
                   )}
                   <IncidentThumbnail photoUrl={incident.photo_url} />

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import OccurrencesTab from './OccurrencesTab';
 
 const mockState = vi.hoisted(() => ({ override: null as unknown[] | null }));
@@ -96,12 +96,16 @@ describe('OccurrencesTab', () => {
     });
   });
 
-  it('shows the owner name and WhatsApp inline on an open incident', async () => {
+  it('shows labeled "Morador:" and "WhatsApp:" lines with a formatted phone on an open incident', async () => {
     render(<OccurrencesTab />);
     await waitFor(() => {
       expect(screen.getByText('Mariana Costa')).toBeInTheDocument();
-      expect(screen.getByText('21999990000')).toBeInTheDocument();
     });
+    expect(screen.getAllByText('Morador:').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('WhatsApp:').length).toBeGreaterThan(0);
+    expect(screen.getByText('(21) 99999-0000')).toBeInTheDocument();
+    expect(screen.getByText('(21) 98888-0000')).toBeInTheDocument();
+    expect(screen.queryByText('21999990000')).not.toBeInTheDocument();
   });
 
   it('opens BikeDetailModal with the full bike when "Ver cadastro completo" is clicked', async () => {
@@ -113,16 +117,21 @@ describe('OccurrencesTab', () => {
     });
   });
 
-  it('shows a clickable photo thumbnail instead of just a "Foto anexada" badge when an incident has a photo', async () => {
+  it('opens the photo in an in-app lightbox (not a new tab, not the detail modal) when the thumbnail is clicked', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     render(<OccurrencesTab />);
     const img = await screen.findByRole('img', { name: /foto da ocorrência/i });
     expect(img).toHaveAttribute('src', 'https://example.com/foto.jpg');
     expect(screen.queryByText(/foto anexada/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     fireEvent.click(img);
-    expect(openSpy).toHaveBeenCalledWith('https://example.com/foto.jpg', '_blank', 'noopener,noreferrer');
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('img')).toHaveAttribute('src', 'https://example.com/foto.jpg');
+    expect(openSpy).not.toHaveBeenCalled();
     // the click must not bubble to the card and open the detail modal
     expect(screen.queryByText(/reportado em/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Fechar foto'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     openSpy.mockRestore();
   });
 

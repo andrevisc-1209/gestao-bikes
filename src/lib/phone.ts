@@ -27,3 +27,17 @@ export function formatBrazilPhone(digits: string): string {
 
   return `(${areaCode}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
 }
+
+/**
+ * Formats a stored phone for read-only display. Only 10/11-digit values are
+ * formatted; anything else (legacy or odd data) is shown as stored, trimmed,
+ * so it is never truncated.
+ */
+export function formatPhoneForDisplay(stored: string | null | undefined): string {
+  if (!stored) return '';
+  const digits = stored.replace(/\D/g, '');
+  if (digits.length === 10 || digits.length === 11) {
+    return formatBrazilPhone(digits);
+  }
+  return stored.trim();
+}
