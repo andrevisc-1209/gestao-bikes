@@ -41,3 +41,10 @@ export interface Incident {
   created_at: string;
   resolved_at: string | null;
 }
+
+export interface Sticker {
+  tag_number: string;
+  status: 'available' | 'assigned';
+  bike_id: string | null;
+  created_at: string;
+}

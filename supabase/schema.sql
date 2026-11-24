@@ -51,6 +51,16 @@ create table incidents (
   resolved_at timestamptz
 );
 
+-- Pool of pre-printed sticker tag numbers. Admins generate batches ahead of
+-- time (generate_sticker_batch); approve_bike claims one atomically instead
+-- of incrementing condo_settings.next_tag_number.
+create table stickers (
+  tag_number text primary key,
+  status text not null default 'available' check (status in ('available', 'assigned')),
+  bike_id uuid references bikes(id),
+  created_at timestamptz not null default now()
+);
+
 -- 4. Storage --------------------------------------------------------------------
 
 insert into storage.buckets (id, name, public)
@@ -70,10 +80,14 @@ grant insert on bikes to anon;
 grant select, insert, update, delete on incidents to authenticated;
 grant insert on incidents to anon;
 grant select, update on condo_settings to authenticated;
+grant select on stickers to authenticated;
+-- no insert/update grant to anon or authenticated directly — only the
+-- SECURITY DEFINER RPCs below ever write to this table.
 
 alter table condo_settings enable row level security;
 alter table bikes enable row level security;
 alter table incidents enable row level security;
+alter table stickers enable row level security;
 
 -- condo_settings: authenticated (admin) only, no public access at all.
 create policy "condo_settings_select_authenticated"
@@ -106,6 +120,13 @@ create policy "incidents_insert_anyone"
 
 create policy "incidents_all_authenticated"
   on incidents for all
+  to authenticated
+  using (true);
+
+-- stickers: admins only read directly; all writes go through the
+-- SECURITY DEFINER RPCs below (generate_sticker_batch, approve_bike).
+create policy "stickers_select_authenticated"
+  on stickers for select
   to authenticated
   using (true);
 
@@ -154,8 +175,65 @@ $$;
 
 grant execute on function get_public_bike_by_tag(text) to anon, authenticated;
 
--- Atomically assigns the next tag number to a pending bike and activates it.
--- Avoids a race between concurrent approvals reading/writing next_tag_number.
+-- Generates a batch of new available stickers, continuing numbering after
+-- the highest tag number seen so far. Guards against colliding with tag
+-- numbers assigned by the old direct-increment flow (condo_settings
+-- next_tag_number) before this feature shipped, by also considering
+-- bikes.tag_number, not just the new stickers table.
+create function generate_sticker_batch(p_count int)
+returns int
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_created int;
+begin
+  -- Defense in depth: even though EXECUTE is revoked from public/anon below,
+  -- guard against misconfigured grants by checking the caller's role here too.
+  if auth.role() != 'authenticated' then
+    raise exception 'not authorized';
+  end if;
+
+  if p_count is null or p_count <= 0 then
+    raise exception 'p_count must be positive';
+  end if;
+
+  with next_seed as (
+    select greatest(
+      coalesce((select max(tag_number::int) from stickers), 0),
+      coalesce((select max(tag_number::int) from bikes where tag_number ~ '^[0-9]+$'), 0)
+    ) as seed
+  ),
+  inserted as (
+    insert into stickers (tag_number)
+    select lpad((seed + i)::text, greatest(3, length((seed + i)::text)), '0')
+    from next_seed, generate_series(1, p_count) as i
+    -- Belt-and-suspenders: if a tag number somehow already exists, skip it
+    -- instead of aborting the whole batch, and report the real count created.
+    on conflict (tag_number) do nothing
+    returning tag_number
+  )
+  select count(*) into v_created from inserted;
+
+  return v_created;
+end;
+$$;
+
+-- Not granted to anon — only admins generate sticker batches. Postgres
+-- grants EXECUTE on new functions to PUBLIC by default, which implicitly
+-- includes anon, so we must explicitly revoke it after creating the function.
+revoke execute on function generate_sticker_batch(int) from public;
+revoke execute on function generate_sticker_batch(int) from anon;
+grant execute on function generate_sticker_batch(int) to authenticated;
+
+-- Atomically claims one available sticker from the pool and activates the
+-- pending bike with it. Replaces the old condo_settings.next_tag_number
+-- increment. `for update skip locked` avoids a race between concurrent
+-- approvals claiming the same sticker: if two admins approve at the same
+-- time, each claim locks a distinct available row and the second claim
+-- simply skips the row the first already locked, picking the next lowest
+-- available tag number instead of colliding or blocking.
 create function approve_bike(p_bike_id uuid)
 returns text
 language plpgsql
@@ -163,7 +241,6 @@ security definer
 set search_path = public
 as $$
 declare
-  v_next int;
   v_tag text;
 begin
   -- Defense in depth: even though EXECUTE is revoked from public/anon below,
@@ -172,12 +249,16 @@ begin
     raise exception 'not authorized';
   end if;
 
-  update condo_settings
-  set next_tag_number = next_tag_number + 1
-  where id = (select id from condo_settings limit 1)
-  returning next_tag_number - 1 into v_next;
+  update stickers set status = 'assigned', bike_id = p_bike_id
+  where tag_number = (
+    select tag_number from stickers where status = 'available'
+    order by tag_number::int limit 1 for update skip locked
+  )
+  returning tag_number into v_tag;
 
-  v_tag := lpad(v_next::text, 3, '0');
+  if v_tag is null then
+    raise exception 'Nenhum adesivo disponível. Gere um novo lote.';
+  end if;
 
   update bikes
   set tag_number = v_tag, status = 'active'

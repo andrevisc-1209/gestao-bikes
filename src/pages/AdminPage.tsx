@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Bike as BikeIcon, LogOut, ClipboardList, UserCheck, Warehouse } from 'lucide-react';
+import { Bike as BikeIcon, LogOut, ClipboardList, UserCheck, Warehouse, Tag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import KpiCards from '../components/admin/KpiCards';
 import OccurrencesTab from '../components/admin/OccurrencesTab';
 import ApprovalsTab from '../components/admin/ApprovalsTab';
 import FleetTab from '../components/admin/FleetTab';
+import StickersTab from '../components/admin/StickersTab';
 
-type TabId = 'occurrences' | 'approvals' | 'fleet';
+type TabId = 'occurrences' | 'approvals' | 'fleet' | 'stickers';
 
 const TABS: { id: TabId; label: string; icon: typeof ClipboardList }[] = [
   { id: 'occurrences', label: 'Ocorrências', icon: ClipboardList },
   { id: 'approvals', label: 'Aprovações', icon: UserCheck },
   { id: 'fleet', label: 'Frota', icon: Warehouse },
+  { id: 'stickers', label: 'Adesivos', icon: Tag },
 ];
 
 interface KpiCounts {
@@ -66,7 +68,7 @@ function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-slate-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800">
+      <header className="bg-slate-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800 print:hidden">
         <div className="max-w-6xl mx-auto px-4 py-3 flex flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-500/20 border border-emerald-500/40 p-2 rounded-xl text-emerald-400">
@@ -78,7 +80,7 @@ function AdminPage() {
             </div>
           </div>
 
-          <nav className="flex-1 md:flex-none flex items-center justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
+          <nav className="flex-1 md:flex-none flex items-center justify-start md:justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -114,12 +116,14 @@ function AdminPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8 space-y-6">
-        <KpiCards
-          activeCount={kpiCounts.activeCount}
-          totalCapacity={kpiCounts.totalCapacity}
-          pendingCount={kpiCounts.pendingCount}
-          openIncidentCount={kpiCounts.openIncidentCount}
-        />
+        <div className="print:hidden">
+          <KpiCards
+            activeCount={kpiCounts.activeCount}
+            totalCapacity={kpiCounts.totalCapacity}
+            pendingCount={kpiCounts.pendingCount}
+            openIncidentCount={kpiCounts.openIncidentCount}
+          />
+        </div>
 
         {activeTab === 'occurrences' && <OccurrencesTab onResolved={refreshKpiCounts} />}
         {activeTab === 'approvals' && <ApprovalsTab onApproved={refreshKpiCounts} />}
@@ -130,6 +134,7 @@ function AdminPage() {
             onCapacityChanged={refreshKpiCounts}
           />
         )}
+        {activeTab === 'stickers' && <StickersTab />}
       </main>
     </div>
   );
