@@ -59,21 +59,31 @@ vi.mock('../../lib/supabase', () => ({
   },
 }));
 
+vi.mock('./ResolveIncidentModal', () => ({
+  default: ({ onResolved }: { incident: { id: string }; onResolved: () => void }) => (
+    <div>
+      <p>Resolve Incident Mock</p>
+      <button type="button" onClick={onResolved}>
+        Confirmar Mock
+      </button>
+    </div>
+  ),
+}));
+
 afterEach(() => {
   updateMock.mockClear();
   vi.restoreAllMocks();
 });
 
 describe('OccurrencesTab', () => {
-  it('does not resolve the incident when the admin cancels the confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
-    render(<OccurrencesTab />);
-    await waitFor(() => expect(screen.getByText('Marcar Resolvida')).toBeTruthy());
-
-    fireEvent.click(screen.getByText('Marcar Resolvida'));
-
-    expect(window.confirm).toHaveBeenCalled();
-    expect(updateMock).not.toHaveBeenCalled();
+  it('opens ResolveIncidentModal instead of window.confirm when "Marcar Resolvida" is clicked, and refreshes on success', async () => {
+    render(<OccurrencesTab onResolved={vi.fn()} />);
+    await waitFor(() => expect(screen.getByText('Mariana Costa')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('button', { name: /marcar resolvida/i })[0]);
+    fireEvent.click(screen.getByRole('button', { name: /confirmar mock/i }));
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /confirmar mock/i })).not.toBeInTheDocument();
+    });
   });
 
   it('shows the owner name and WhatsApp inline on an open incident', async () => {

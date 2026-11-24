@@ -3,6 +3,7 @@ import { Check, CheckCircle, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Bike, Incident } from '../../types/database';
 import BikeDetailModal from './BikeDetailModal';
+import ResolveIncidentModal from './ResolveIncidentModal';
 
 type IncidentWithBike = Incident & {
   bikes: {
@@ -29,7 +30,7 @@ interface OccurrencesTabProps {
 function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
   const [incidents, setIncidents] = useState<IncidentWithBike[]>([]);
   const [loading, setLoading] = useState(true);
-  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [resolvingIncident, setResolvingIncident] = useState<{ id: string } | null>(null);
   const [viewingBike, setViewingBike] = useState<Bike | null>(null);
 
   async function loadIncidents() {
@@ -55,18 +56,8 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
     loadIncidents();
   }, []);
 
-  async function handleResolve(id: string) {
-    if (!window.confirm('Marcar esta ocorrência como resolvida?')) return;
-
-    setResolvingId(id);
-    await supabase
-      .from('incidents')
-      .update({ status: 'resolved', resolved_at: new Date().toISOString() })
-      .eq('id', id);
-
-    await loadIncidents();
-    onResolved();
-    setResolvingId(null);
+  function handleResolve(id: string) {
+    setResolvingIncident({ id });
   }
 
   if (loading) {
@@ -141,11 +132,10 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
                   <button
                     type="button"
                     onClick={() => handleResolve(incident.id)}
-                    disabled={resolvingId === incident.id}
                     className="shrink-0 bg-white hover:bg-emerald-600 text-slate-700 hover:text-white border border-slate-200 hover:border-emerald-600 text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
                   >
                     <Check className="w-3.5 h-3.5" />
-                    <span>{resolvingId === incident.id ? 'Resolvendo...' : 'Marcar Resolvida'}</span>
+                    <span>Marcar Resolvida</span>
                   </button>
                 </div>
               </div>
@@ -190,6 +180,18 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
           bike={viewingBike}
           onClose={() => setViewingBike(null)}
           onSaved={() => setViewingBike(null)}
+        />
+      )}
+
+      {resolvingIncident && (
+        <ResolveIncidentModal
+          incident={resolvingIncident}
+          onClose={() => setResolvingIncident(null)}
+          onResolved={async () => {
+            setResolvingIncident(null);
+            await loadIncidents();
+            onResolved();
+          }}
         />
       )}
     </div>
