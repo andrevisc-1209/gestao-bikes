@@ -30,4 +30,17 @@ describe('ApprovalsTab', () => {
     expect(screen.queryByText(/adesivo atribuído/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Bloco A/)).toBeInTheDocument();
   });
+
+  it('tells the admin to generate more stickers when the pool is empty', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Nenhum adesivo disponível. Gere um novo lote.' },
+    });
+    render(<ApprovalsTab onApproved={() => {}} />);
+    await waitFor(() => screen.getByText(/Bloco A/));
+    fireEvent.click(screen.getByRole('button', { name: /atribuir adesivo/i }));
+
+    await waitFor(() => expect(screen.getByText(/gere mais adesivos/i)).toBeInTheDocument());
+    expect(screen.getByText(/aba adesivos/i)).toBeInTheDocument();
+  });
 });

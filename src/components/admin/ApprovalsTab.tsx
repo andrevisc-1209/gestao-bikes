@@ -47,6 +47,11 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
       setAssignedTag(data as string);
       onApproved();
       await loadPendingBikes();
+    } else if (error?.message?.includes('Nenhum adesivo disponível')) {
+      setApproveError({
+        bikeId,
+        message: 'Nenhum adesivo disponível no lote. Gere mais adesivos na aba Adesivos.',
+      });
     } else {
       setApproveError({
         bikeId,
