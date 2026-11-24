@@ -12,8 +12,10 @@ describe('ResolveIncidentModal', () => {
     updateMock.mockReset();
   });
 
-  it('defaults to the first reason and updates the incident with the selected reason and notes', async () => {
-    updateMock.mockReturnValue({ eq: () => ({ select: () => Promise.resolve({ data: [{ id: 'incident-1' }], error: null }) }) });
+  it('defaults to the first reason and updates the incident with the selected reason and notes, filtering on id and open status', async () => {
+    const eqStatusMock = vi.fn(() => ({ select: () => Promise.resolve({ data: [{ id: 'incident-1' }], error: null }) }));
+    const eqIdMock = vi.fn(() => ({ eq: eqStatusMock }));
+    updateMock.mockReturnValue({ eq: eqIdMock });
     const onResolved = vi.fn();
     render(<ResolveIncidentModal incident={{ id: 'incident-1' }} onClose={vi.fn()} onResolved={onResolved} />);
     fireEvent.change(screen.getByLabelText(/motivo da resolução/i), { target: { value: 'Morador contatado e resolveu' } });
@@ -25,12 +27,16 @@ describe('ResolveIncidentModal', () => {
         resolution: 'Morador contatado e resolveu',
         resolution_notes: 'Falou com o morador',
       }));
+      expect(eqIdMock).toHaveBeenCalledWith('id', 'incident-1');
+      expect(eqStatusMock).toHaveBeenCalledWith('status', 'open');
       expect(onResolved).toHaveBeenCalled();
     });
   });
 
   it('shows an error and does not call onResolved when the update affects zero rows (already resolved elsewhere)', async () => {
-    updateMock.mockReturnValue({ eq: () => ({ select: () => Promise.resolve({ data: [], error: null }) }) });
+    // Simulates the status filter excluding the row because another admin already resolved it:
+    // the chain still reaches .select(), but matches zero rows.
+    updateMock.mockReturnValue({ eq: () => ({ eq: () => ({ select: () => Promise.resolve({ data: [], error: null }) }) }) });
     const onResolved = vi.fn();
     render(<ResolveIncidentModal incident={{ id: 'incident-1' }} onClose={vi.fn()} onResolved={onResolved} />);
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));
@@ -41,7 +47,7 @@ describe('ResolveIncidentModal', () => {
   });
 
   it('shows the error and does not call onResolved when the update itself fails', async () => {
-    updateMock.mockReturnValue({ eq: () => ({ select: () => Promise.resolve({ data: null, error: { message: 'network error' } }) }) });
+    updateMock.mockReturnValue({ eq: () => ({ eq: () => ({ select: () => Promise.resolve({ data: null, error: { message: 'network error' } }) }) }) });
     const onResolved = vi.fn();
     render(<ResolveIncidentModal incident={{ id: 'incident-1' }} onClose={vi.fn()} onResolved={onResolved} />);
     fireEvent.click(screen.getByRole('button', { name: /confirmar/i }));

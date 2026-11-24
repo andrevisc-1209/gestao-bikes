@@ -28,6 +28,7 @@ function ResolveIncidentModal({ incident, onClose, onResolved }: ResolveIncident
         resolution_notes: notes,
       })
       .eq('id', incident.id)
+      .eq('status', 'open')
       .select();
 
     if (updateError) {

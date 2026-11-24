@@ -32,6 +32,7 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
   const [loading, setLoading] = useState(true);
   const [resolvingIncident, setResolvingIncident] = useState<{ id: string } | null>(null);
   const [viewingBike, setViewingBike] = useState<Bike | null>(null);
+  const [viewError, setViewError] = useState<string | null>(null);
 
   async function loadIncidents() {
     setLoading(true);
@@ -45,10 +46,13 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
   }
 
   async function handleViewRegistration(bikeId: string) {
+    setViewError(null);
     const { data, error } = await supabase.from('bikes').select('*').eq('id', bikeId).single();
 
     if (!error && data) {
       setViewingBike(data as Bike);
+    } else {
+      setViewError(error?.message || 'Não foi possível carregar o cadastro completo. Tente novamente.');
     }
   }
 
@@ -79,6 +83,9 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
           </div>
           <span className="text-xs text-slate-400">Tempo real</span>
         </div>
+        {viewError && (
+          <p className="px-5 pt-3 text-[11px] font-semibold text-rose-600">{viewError}</p>
+        )}
         <div className="p-5 space-y-3">
           {openIncidents.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
@@ -179,7 +186,10 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
         <BikeDetailModal
           bike={viewingBike}
           onClose={() => setViewingBike(null)}
-          onSaved={() => setViewingBike(null)}
+          onSaved={async () => {
+            setViewingBike(null);
+            await loadIncidents();
+          }}
         />
       )}
 

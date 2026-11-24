@@ -1,8 +1,6 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import OccurrencesTab from './OccurrencesTab';
-
-const updateMock = vi.fn(() => ({ eq: () => Promise.resolve({ error: null }) }));
 
 const fullBikeFixture = {
   id: '1',
@@ -53,7 +51,6 @@ vi.mock('../../lib/supabase', () => ({
               error: null,
             }),
         }),
-        update: updateMock,
       };
     },
   },
@@ -69,11 +66,6 @@ vi.mock('./ResolveIncidentModal', () => ({
     </div>
   ),
 }));
-
-afterEach(() => {
-  updateMock.mockClear();
-  vi.restoreAllMocks();
-});
 
 describe('OccurrencesTab', () => {
   it('opens ResolveIncidentModal instead of window.confirm when "Marcar Resolvida" is clicked, and refreshes on success', async () => {
