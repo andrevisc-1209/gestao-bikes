@@ -82,12 +82,13 @@ describe('AdminPage refresh', () => {
     expect(screen.getByText('occurrences-fake')).toBeInTheDocument();
   });
 
-  it('puts the nav on its own full-width row below sm', () => {
+  it('puts the nav on its own full-width row below lg', () => {
     render(<AdminPage />);
     const nav = screen.getByRole('button', { name: 'Frota' }).closest('nav')!;
     expect(nav.className).toContain('order-last');
     expect(nav.className).toContain('w-full');
-    expect(nav.className).toContain('sm:order-none');
+    expect(nav.className).toContain('lg:order-none');
+    expect(nav.className).toContain('lg:w-auto');
   });
 
   it('still switches tabs',async () => {
