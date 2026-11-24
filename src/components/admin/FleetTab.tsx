@@ -166,8 +166,8 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                       <p className="font-bold text-slate-800">{bike.unit_block}</p>
                       <p className="text-[11px] text-slate-500">{bike.owner_name}</p>
                     </div>
-                    {!isInactive && (
-                      <div className="space-y-2">
+                    <div className="space-y-2">
+                      {!isInactive && (
                         <button
                           type="button"
                           onClick={() => setViewingQrTag(bike.tag_number)}
@@ -175,13 +175,15 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                         >
                           Ver QR
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleViewDetail(bike)}
-                          className="w-full text-center text-slate-600 font-semibold text-xs py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
-                        >
-                          Ver cadastro completo
-                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleViewDetail(bike)}
+                        className="w-full text-center text-slate-600 font-semibold text-xs py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
+                      >
+                        Ver cadastro completo
+                      </button>
+                      {!isInactive && (
                         <button
                           type="button"
                           onClick={() => setDeactivatingBike(bike)}
@@ -189,8 +191,8 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                         >
                           Dar Baixa
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -246,35 +248,33 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
                           )}
                         </td>
                         <td className="py-3.5 px-4 text-right">
-                          {isInactive ? (
-                            <span className="text-slate-400 font-medium px-2 py-1">—</span>
-                          ) : (
-                            <div className="flex flex-col items-end gap-1">
-                              <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => setViewingQrTag(bike.tag_number)}
-                                  className="text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
-                                >
-                                  Ver QR
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleViewDetail(bike)}
-                                  className="text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
-                                >
-                                  Ver cadastro completo
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setDeactivatingBike(bike)}
-                                  className="text-slate-400 hover:text-rose-600 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors"
-                                >
-                                  Dar Baixa
-                                </button>
-                              </div>
-                            </div>
-                          )}
+                          <div className="flex items-center justify-end gap-1">
+                            {!isInactive && (
+                              <button
+                                type="button"
+                                onClick={() => setViewingQrTag(bike.tag_number)}
+                                className="text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+                              >
+                                Ver QR
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleViewDetail(bike)}
+                              className="text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+                            >
+                              Ver cadastro completo
+                            </button>
+                            {!isInactive && (
+                              <button
+                                type="button"
+                                onClick={() => setDeactivatingBike(bike)}
+                                className="text-slate-400 hover:text-rose-600 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors"
+                              >
+                                Dar Baixa
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Bike as BikeIcon, LogOut, ClipboardList, UserCheck, Warehouse, Tag } from 'lucide-react';
+import { Bike as BikeIcon, LogOut, RefreshCw, ClipboardList, UserCheck, Warehouse, Tag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import KpiCards from '../components/admin/KpiCards';
@@ -37,6 +37,9 @@ function AdminPage() {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>('occurrences');
   const [kpiCounts, setKpiCounts] = useState<KpiCounts>(EMPTY_KPI_COUNTS);
+  // Bumped by the "Atualizar" button; part of the active tab's key so the tab
+  // remounts and re-runs its own initial load.
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // refreshKpiCounts: refetches the four KPI numbers from Supabase.
   // Tasks 8/9 should call this (e.g. via an onApproved callback) whenever
@@ -69,7 +72,7 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-slate-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800 print:hidden">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-row items-center justify-between gap-2">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-row flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-500/20 border border-emerald-500/40 p-2 rounded-xl text-emerald-400">
               <BikeIcon className="w-6 h-6" />
@@ -80,7 +83,7 @@ function AdminPage() {
             </div>
           </div>
 
-          <nav className="flex-1 md:flex-none flex items-center justify-start md:justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
+          <nav className="order-last w-full flex-none lg:order-none lg:w-auto flex items-center justify-start md:justify-center gap-1 overflow-x-auto bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -103,15 +106,29 @@ function AdminPage() {
             })}
           </nav>
 
-          <button
-            type="button"
-            onClick={() => signOut()}
-            aria-label="Sair"
-            className="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Sair</span>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                refreshKpiCounts();
+                setRefreshKey((k) => k + 1);
+              }}
+              aria-label="Atualizar"
+              className="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Atualizar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => signOut()}
+              aria-label="Sair"
+              className="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sair</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -125,16 +142,21 @@ function AdminPage() {
           />
         </div>
 
-        {activeTab === 'occurrences' && <OccurrencesTab onResolved={refreshKpiCounts} />}
-        {activeTab === 'approvals' && <ApprovalsTab onApproved={refreshKpiCounts} />}
+        {activeTab === 'occurrences' && (
+          <OccurrencesTab key={`${activeTab}-${refreshKey}`} onResolved={refreshKpiCounts} />
+        )}
+        {activeTab === 'approvals' && (
+          <ApprovalsTab key={`${activeTab}-${refreshKey}`} onApproved={refreshKpiCounts} />
+        )}
         {activeTab === 'fleet' && (
           <FleetTab
+            key={`${activeTab}-${refreshKey}`}
             currentCapacity={kpiCounts.totalCapacity}
             settingsId={kpiCounts.settingsId ?? undefined}
             onCapacityChanged={refreshKpiCounts}
           />
         )}
-        {activeTab === 'stickers' && <StickersTab />}
+        {activeTab === 'stickers' && <StickersTab key={`${activeTab}-${refreshKey}`} />}
       </main>
     </div>
   );

@@ -1,11 +1,29 @@
 import { useEffect, useState } from 'react';
-import { Check, CheckCircle, Image as ImageIcon } from 'lucide-react';
+import { Check, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { safeHttpUrl } from '../../lib/safeUrl';
 import type { Bike, Incident } from '../../types/database';
 import BikeDetailModal from './BikeDetailModal';
 import ResolveIncidentModal from './ResolveIncidentModal';
+import IncidentDetailModal from './IncidentDetailModal';
 
-type IncidentWithBike = Incident & {
+function IncidentThumbnail({ photoUrl }: { photoUrl: string | null | undefined }) {
+  const safe = safeHttpUrl(photoUrl);
+  if (!safe) return null;
+  return (
+    <img
+      src={safe}
+      alt="Foto da ocorrência"
+      className="w-12 h-12 rounded-lg object-cover border border-slate-200 cursor-pointer"
+      onClick={(event) => {
+        event.stopPropagation();
+        window.open(safe, '_blank', 'noopener,noreferrer');
+      }}
+    />
+  );
+}
+
+export type IncidentWithBike = Incident & {
   bikes: {
     tag_number: string | null;
     unit_block: string;
@@ -33,6 +51,7 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
   const [resolvingIncident, setResolvingIncident] = useState<{ id: string } | null>(null);
   const [viewingBike, setViewingBike] = useState<Bike | null>(null);
   const [viewError, setViewError] = useState<string | null>(null);
+  const [viewingIncident, setViewingIncident] = useState<IncidentWithBike | null>(null);
 
   async function loadIncidents() {
     setLoading(true);
@@ -98,7 +117,10 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
                 key={incident.id}
                 className="p-3.5 rounded-xl border border-rose-200/80 bg-rose-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
-                <div className="space-y-1">
+                <div
+                  className="space-y-1 flex-1 cursor-pointer"
+                  onClick={() => setViewingIncident(incident)}
+                >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="bg-slate-900 text-white font-extrabold text-[11px] px-2 py-0.5 rounded-md">
                       BIKE {incident.bikes?.tag_number ?? '—'}
@@ -122,23 +144,25 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
                       )}
                     </p>
                   )}
-                  {incident.photo_url && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded">
-                      <ImageIcon className="w-3 h-3" /> Foto anexada
-                    </span>
-                  )}
+                  <IncidentThumbnail photoUrl={incident.photo_url} />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 shrink-0">
                   <button
                     type="button"
-                    onClick={() => handleViewRegistration(incident.bike_id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleViewRegistration(incident.bike_id);
+                    }}
                     className="shrink-0 bg-white hover:bg-slate-900 text-slate-700 hover:text-white border border-slate-200 hover:border-slate-900 text-xs font-semibold px-3 py-2 rounded-xl transition-all shadow-sm"
                   >
                     Ver cadastro completo
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleResolve(incident.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleResolve(incident.id);
+                    }}
                     className="shrink-0 bg-white hover:bg-emerald-600 text-slate-700 hover:text-white border border-slate-200 hover:border-emerald-600 text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -162,7 +186,8 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
             resolvedIncidents.map((incident) => (
               <div
                 key={incident.id}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer"
+                onClick={() => setViewingIncident(incident)}
               >
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -181,6 +206,10 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
           )}
         </div>
       </div>
+
+      {viewingIncident && (
+        <IncidentDetailModal incident={viewingIncident} onClose={() => setViewingIncident(null)} />
+      )}
 
       {viewingBike && (
         <BikeDetailModal

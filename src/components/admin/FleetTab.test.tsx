@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import FleetTab from './FleetTab';
 
 const updateMock = vi.fn(() => ({ eq: () => Promise.resolve({ error: null }) }));
@@ -147,5 +147,35 @@ describe('FleetTab', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Updated Brand').length).toBeGreaterThan(0);
     });
+  });
+
+  it('inactive bike shows "Ver cadastro completo" only; active bike shows all three actions', async () => {
+    fleetListData = [{ ...fleetListData[0], status: 'inactive' }];
+    const { unmount } = render(<FleetTab />);
+    await waitFor(() => expect(screen.getAllByText(/Inativa/).length).toBeGreaterThan(0));
+
+    const inactiveRows = [
+      screen.getByRole('table').querySelector('tbody tr') as HTMLElement,
+      screen.getAllByText(/Inativa/)[0].closest('div.p-4') as HTMLElement,
+    ];
+    for (const row of inactiveRows) {
+      expect(within(row).getByText('Ver cadastro completo')).toBeInTheDocument();
+      expect(within(row).queryByText('Ver QR')).not.toBeInTheDocument();
+      expect(within(row).queryByText('Dar Baixa')).not.toBeInTheDocument();
+    }
+    unmount();
+
+    fleetListData = [{ ...fleetListData[0], status: 'active' }];
+    render(<FleetTab />);
+    await waitFor(() => expect(screen.getAllByText(/Ativa/).length).toBeGreaterThan(0));
+    const activeRows = [
+      screen.getByRole('table').querySelector('tbody tr') as HTMLElement,
+      screen.getAllByText(/Ativa/)[0].closest('div.p-4') as HTMLElement,
+    ];
+    for (const row of activeRows) {
+      expect(within(row).getByText('Ver cadastro completo')).toBeInTheDocument();
+      expect(within(row).getByText('Ver QR')).toBeInTheDocument();
+      expect(within(row).getByText('Dar Baixa')).toBeInTheDocument();
+    }
   });
 });

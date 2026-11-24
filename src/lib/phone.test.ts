@@ -10,7 +10,8 @@ describe('formatBrazilPhone', () => {
     expect(formatBrazilPhone('2')).toBe('(2');
     expect(formatBrazilPhone('21')).toBe('(21');
     expect(formatBrazilPhone('219')).toBe('(21) 9');
-    expect(formatBrazilPhone('21999990')).toBe('(21) 99999');
+    expect(formatBrazilPhone('21999990')).toBe('(21) 99999-0');
+    expect(formatBrazilPhone('219999900')).toBe('(21) 99999-00');
   });
 
   it('strips non-digit characters before formatting, so a pasted formatted number re-formats correctly', () => {
