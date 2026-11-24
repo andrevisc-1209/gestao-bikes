@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import OccurrencesTab from './OccurrencesTab';
 
+const mockState = vi.hoisted(() => ({ override: null as unknown[] | null }));
+
 const fullBikeFixture = {
   id: '1',
   tag_number: '014',
@@ -30,7 +32,7 @@ vi.mock('../../lib/supabase', () => ({
         select: () => ({
           order: () =>
             Promise.resolve({
-              data: [
+              data: mockState.override ?? [
                 {
                   id: '1',
                   bike_id: '1',
@@ -131,5 +133,23 @@ describe('OccurrencesTab', () => {
     await waitFor(() => expect(screen.getByText('Mariana Costa')).toBeInTheDocument());
     // only the one incident that has a photo renders a thumbnail
     expect(screen.getAllByRole('img', { name: /foto da ocorrência/i })).toHaveLength(1);
+  });
+
+  it('renders no img and never exposes a javascript: photo_url', async () => {
+    mockState.override = [
+      {
+        id: '9', bike_id: '9', reason: 'Malicioso', notes: null,
+        photo_url: 'javascript:alert(1)', status: 'open',
+        created_at: '2026-11-02T10:00:00Z', resolved_at: null,
+        bikes: { tag_number: '099', unit_block: 'Bloco C', owner_name: 'X', owner_whatsapp: '1' },
+      },
+    ];
+    try {
+      render(<OccurrencesTab />);
+      await waitFor(() => expect(screen.getByText('Malicioso')).toBeInTheDocument());
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    } finally {
+      mockState.override = null;
+    }
   });
 });

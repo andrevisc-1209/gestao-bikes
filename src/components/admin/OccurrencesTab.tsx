@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { safeHttpUrl } from '../../lib/safeUrl';
 import type { Bike, Incident } from '../../types/database';
 import BikeDetailModal from './BikeDetailModal';
 import ResolveIncidentModal from './ResolveIncidentModal';
@@ -122,14 +123,15 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
                       )}
                     </p>
                   )}
-                  {incident.photo_url && (
+                  {safeHttpUrl(incident.photo_url) && (
                     <img
-                      src={incident.photo_url}
+                      src={safeHttpUrl(incident.photo_url)!}
                       alt="Foto da ocorrência"
                       className="w-12 h-12 rounded-lg object-cover border border-slate-200 cursor-pointer"
                       onClick={(event) => {
                         event.stopPropagation();
-                        window.open(incident.photo_url!, '_blank', 'noopener,noreferrer');
+                        const safe = safeHttpUrl(incident.photo_url);
+                        if (safe) window.open(safe, '_blank', 'noopener,noreferrer');
                       }}
                     />
                   )}
