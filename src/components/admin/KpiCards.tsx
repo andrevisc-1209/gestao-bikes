@@ -42,7 +42,7 @@ function KpiCards({ activeCount, totalCapacity, pendingCount, openIncidentCount 
 
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold text-slate-500">Bikes Emplacadas (Ativas)</span>
+          <span className="text-xs font-semibold text-slate-500">Bikes Adesivadas (Ativas)</span>
           <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
             <Tag className="w-4 h-4" />
           </div>
