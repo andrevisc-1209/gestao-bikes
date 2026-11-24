@@ -3,6 +3,7 @@ import { Bike as BikeIcon, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Bike } from '../../types/database';
 import { BLOCK_OPTIONS, COLOR_OPTIONS, OTHER_COLOR } from '../../lib/bikeOptions';
+import { formatBrazilPhone } from '../../lib/phone';
 
 interface BikeDetailModalProps {
   bike: Bike;
@@ -197,8 +198,8 @@ function BikeDetailModal({ bike, onClose, onSaved }: BikeDetailModalProps) {
               <input
                 id="bdm-owner-whatsapp"
                 type="text"
-                value={ownerWhatsapp}
-                onChange={(event) => setOwnerWhatsapp(event.target.value)}
+                value={formatBrazilPhone(ownerWhatsapp)}
+                onChange={(event) => setOwnerWhatsapp(event.target.value.replace(/\D/g, '').slice(0, 11))}
                 className="w-full text-xs px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>

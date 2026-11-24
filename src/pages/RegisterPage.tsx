@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ClipboardList, Bike as BikeIcon, CheckCircle2, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { compressAndUpload } from '../lib/imageCompression';
+import { formatBrazilPhone } from '../lib/phone';
 import PhotoAttachField from '../components/PhotoAttachField';
 import PublicNavTabs from '../components/PublicNavTabs';
 import { BLOCK_OPTIONS, OTHER_BRAND, OTHER_MODEL, BRAND_MODELS, BRAND_OPTIONS, OTHER_COLOR, COLOR_OPTIONS } from '../lib/bikeOptions';
@@ -162,8 +163,8 @@ function RegisterPage() {
                   id="reg-phone"
                   required
                   placeholder="(21) 99999-0000"
-                  value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
+                  value={formatBrazilPhone(whatsapp)}
+                  onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, '').slice(0, 11))}
                   className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
