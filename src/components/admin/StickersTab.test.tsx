@@ -6,13 +6,26 @@ const rpcMock = vi.hoisted(() => vi.fn().mockResolvedValue({ data: 5, error: nul
 const selectMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({ data: [], error: null })
 );
+const bikesMock = vi.hoisted(() => vi.fn().mockResolvedValue({ data: [], error: null }));
 
 vi.mock('../../lib/supabase', () => ({
   supabase: {
-    from: () => ({ select: () => ({ order: selectMock }) }),
+    from: (table: string) => ({
+      select: () => ({ order: table === 'stickers' ? selectMock : bikesMock }),
+    }),
     rpc: rpcMock,
   },
 }));
+
+const sticker = (tag_number: string, status = 'available', bike_id: string | null = null) => ({
+  tag_number,
+  status,
+  bike_id,
+  created_at: '2026-01-01',
+});
+
+const available = (n: number) =>
+  Array.from({ length: n }, (_, i) => sticker(String(i + 1).padStart(3, '0')));
 
 describe('StickersTab', () => {
   it('generates whole A4 sheets (12 stickers each) and refetches', async () => {
@@ -66,32 +79,22 @@ describe('StickersTab', () => {
     );
   });
 
-  it('shows the count of available stickers and a printable card per sticker', async () => {
+  it('prints the reserve by default, not stickers already on bikes', async () => {
     selectMock.mockResolvedValueOnce({
-      data: [
-        { tag_number: '005', status: 'available', bike_id: null, created_at: '2026-01-01' },
-        { tag_number: '006', status: 'available', bike_id: null, created_at: '2026-01-01' },
-        { tag_number: '007', status: 'assigned', bike_id: 'b1', created_at: '2026-01-01' },
-      ],
+      data: [sticker('005'), sticker('006'), sticker('007', 'assigned', 'b1')],
       error: null,
     });
 
     render(<StickersTab />);
 
-    await waitFor(() => expect(screen.getByText(/2 adesivos disponíveis/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/2 adesivos disponíveis na reserva/i)).toBeInTheDocument());
     expect(screen.getByText('BIKE #005')).toBeInTheDocument();
     expect(screen.getByText('BIKE #006')).toBeInTheDocument();
     expect(screen.queryByText('BIKE #007')).not.toBeInTheDocument();
   });
 
-  it('splits available stickers into A4 sheets of 12', async () => {
-    const data = Array.from({ length: 13 }, (_, i) => ({
-      tag_number: String(i + 1).padStart(3, '0'),
-      status: 'available',
-      bike_id: null,
-      created_at: '2026-01-01',
-    }));
-    selectMock.mockResolvedValueOnce({ data, error: null });
+  it('splits the reserve into A4 sheets of 12', async () => {
+    selectMock.mockResolvedValueOnce({ data: available(13), error: null });
 
     const { container } = render(<StickersTab />);
 
@@ -100,6 +103,68 @@ describe('StickersTab', () => {
     expect(sheets).toHaveLength(2);
     expect(sheets[0].querySelectorAll('.sticker-print-card')).toHaveLength(12);
     expect(sheets[1].querySelectorAll('.sticker-print-card')).toHaveLength(1);
-    expect(screen.getByText(/2 folhas A4/i)).toBeInTheDocument();
+    expect(screen.getByText(/13 da reserva · 2 folhas A4/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /imprimir reserva \(13\)/i })).toBeEnabled();
+  });
+
+  it('shows each sticker status, including bikes numbered before the pool', async () => {
+    selectMock.mockResolvedValueOnce({
+      data: [sticker('004', 'assigned', 'b4'), sticker('005')],
+      error: null,
+    });
+    bikesMock.mockResolvedValueOnce({
+      data: [
+        { id: 'b2', tag_number: '002', owner_name: 'Ana', unit_block: 'Apto 201', brand_model: 'Caloi', status: 'active' },
+        { id: 'b4', tag_number: '004', owner_name: 'Rui', unit_block: 'Apto 402', brand_model: 'Sense', status: 'inactive' },
+      ],
+      error: null,
+    });
+
+    render(<StickersTab />);
+
+    await waitFor(() => expect(screen.getByText('#002')).toBeInTheDocument());
+    expect(screen.getByText('Apto 201 · Ana · Caloi')).toBeInTheDocument();
+    expect(screen.getByText('Reserva: 1')).toBeInTheDocument();
+    expect(screen.getByText('Em uso: 1')).toBeInTheDocument();
+    expect(screen.getByText('Bike baixada: 1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Em uso' }));
+    expect(screen.getByText('#002')).toBeInTheDocument();
+    expect(screen.queryByText('#004')).not.toBeInTheDocument();
+    expect(screen.queryByText('#005')).not.toBeInTheDocument();
+  });
+
+  it('reprints stickers typed by number, even ones already on a bike', async () => {
+    selectMock.mockResolvedValueOnce({
+      data: [sticker('010'), sticker('002', 'assigned', 'b2'), sticker('003', 'assigned', 'b3')],
+      error: null,
+    });
+
+    const { container } = render(<StickersTab />);
+    await waitFor(() => expect(screen.getByText('#002')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByLabelText(/selecionar números/i), { target: { value: '2, 3 099' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Marcar' }));
+
+    expect(screen.getByText('2 adesivos marcados. Não existem: 099.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /imprimir selecionados \(2\)/i })).toBeInTheDocument();
+    const cards = [...container.querySelectorAll('.sticker-print-card')].map((c) => c.textContent);
+    expect(cards).toHaveLength(2);
+    expect(cards[0]).toContain('BIKE #002');
+    expect(cards[1]).toContain('BIKE #003');
+
+    fireEvent.click(screen.getByRole('button', { name: /limpar seleção/i }));
+    expect(screen.getByRole('button', { name: /imprimir reserva \(1\)/i })).toBeInTheDocument();
+  });
+
+  it('marks every sticker of the current filter with one click', async () => {
+    selectMock.mockResolvedValueOnce({ data: available(3), error: null });
+    render(<StickersTab />);
+    await waitFor(() => expect(screen.getByText('#003')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /marcar todos da lista/i }));
+    expect(screen.getByRole('button', { name: /imprimir selecionados \(3\)/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Selecionar adesivo 002'));
+    expect(screen.getByRole('button', { name: /imprimir selecionados \(2\)/i })).toBeInTheDocument();
   });
 });
