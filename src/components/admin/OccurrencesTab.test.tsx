@@ -137,9 +137,9 @@ describe('OccurrencesTab', () => {
 
   it('opens the detail modal when the card body is clicked', async () => {
     render(<OccurrencesTab />);
-    await waitFor(() => expect(screen.getByText('Pneu furado')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Pneu furado', { selector: 'p' })).toBeInTheDocument());
     expect(screen.queryByText(/reportado em/i)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Pneu furado'));
+    fireEvent.click(screen.getByText('Pneu furado', { selector: 'p' }));
     expect(await screen.findByText(/reportado em/i)).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText('Fechar'));
     expect(screen.queryByText(/reportado em/i)).not.toBeInTheDocument();
@@ -147,7 +147,7 @@ describe('OccurrencesTab', () => {
 
   it('does not open the detail modal when "Marcar Resolvida" or "Ver cadastro completo" is clicked', async () => {
     render(<OccurrencesTab />);
-    await waitFor(() => expect(screen.getByText('Pneu furado')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Pneu furado', { selector: 'p' })).toBeInTheDocument());
     fireEvent.click(screen.getAllByRole('button', { name: /ver cadastro completo/i })[0]);
     await waitFor(() => expect(screen.getByText(/cadastrado em/i)).toBeInTheDocument());
     expect(screen.queryByText(/reportado em/i)).not.toBeInTheDocument();
@@ -167,9 +167,9 @@ describe('OccurrencesTab', () => {
     ];
     try {
       render(<OccurrencesTab />);
-      await waitFor(() => expect(screen.getByText('Roda solta')).toBeInTheDocument());
-      fireEvent.click(screen.getByText('Roda solta'));
-      expect(await screen.findByText(/resolvida em/i)).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText('Roda solta', { selector: 'p' })).toBeInTheDocument());
+      fireEvent.click(screen.getByText('Roda solta', { selector: 'p' }));
+      expect(await screen.findByText(/resolvida em:/i)).toBeInTheDocument();
       expect(screen.getByText('Reparo feito')).toBeInTheDocument();
     } finally {
       mockState.override = null;
@@ -194,10 +194,80 @@ describe('OccurrencesTab', () => {
     ];
     try {
       render(<OccurrencesTab />);
-      await waitFor(() => expect(screen.getByText('Malicioso')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('Malicioso', { selector: 'p' })).toBeInTheDocument());
       expect(screen.queryByRole('img')).not.toBeInTheDocument();
     } finally {
       mockState.override = null;
     }
+  });
+
+  describe('filters', () => {
+    const incident = (id: string, tag: string, unit: string, reason: string, status: string, created_at: string) => ({
+      id,
+      bike_id: id,
+      reason,
+      notes: null,
+      photo_url: null,
+      status,
+      created_at,
+      resolved_at: status === 'resolved' ? created_at : null,
+      bikes: { tag_number: tag, unit_block: unit, owner_name: 'Dono ' + tag, owner_whatsapp: null },
+    });
+
+    const fixtures = [
+      incident('a', '004', 'Bloco A • Apto 505', 'Pneu murcho', 'open', '2026-11-20T10:00:00Z'),
+      incident('b', '004', 'Bloco A • Apto 505', 'Cabo solto', 'resolved', '2026-11-10T10:00:00Z'),
+      incident('c', '008', 'Bloco A • Apto 703', 'Pneu murcho', 'resolved', '2026-11-12T10:00:00Z'),
+    ];
+
+    async function renderWithFixtures() {
+      mockState.override = fixtures;
+      render(<OccurrencesTab />);
+      await waitFor(() => expect(screen.getByText('3 ocorrências')).toBeInTheDocument());
+    }
+
+    it('filters by bike number, ignoring leading zeros, and flags repeat bikes', async () => {
+      try {
+        await renderWithFixtures();
+        expect(screen.getByRole('button', { name: /BIKE 004\s*2×/ })).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText(/buscar bike/i), { target: { value: '8' } });
+        expect(screen.getByText('1 de 3 ocorrências')).toBeInTheDocument();
+        expect(screen.getByText('Nenhuma ocorrência em aberto com esses filtros')).toBeInTheDocument();
+        expect(screen.getByText('BIKE 008')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /limpar filtros/i }));
+        expect(screen.getByText('3 ocorrências')).toBeInTheDocument();
+      } finally {
+        mockState.override = null;
+      }
+    });
+
+    it('filters by reason and by status', async () => {
+      try {
+        await renderWithFixtures();
+        fireEvent.change(screen.getByLabelText('Motivo'), { target: { value: 'Pneu murcho' } });
+        expect(screen.getByText('2 de 3 ocorrências')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Em aberto' }));
+        expect(screen.getByText('1 de 3 ocorrências')).toBeInTheDocument();
+        expect(screen.queryByText('Ocorrências Resolvidas')).not.toBeInTheDocument();
+      } finally {
+        mockState.override = null;
+      }
+    });
+
+    it('filters by a chosen date range', async () => {
+      try {
+        await renderWithFixtures();
+        fireEvent.click(screen.getByRole('button', { name: 'Escolher datas' }));
+        fireEvent.change(screen.getByLabelText('De'), { target: { value: '2026-11-11' } });
+        fireEvent.change(screen.getByLabelText('Até'), { target: { value: '2026-11-12' } });
+        expect(screen.getByText('1 de 3 ocorrências')).toBeInTheDocument();
+        expect(screen.getByText('BIKE 008')).toBeInTheDocument();
+      } finally {
+        mockState.override = null;
+      }
+    });
   });
 });
