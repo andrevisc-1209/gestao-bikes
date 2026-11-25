@@ -120,7 +120,7 @@ function PublicBikePage() {
     setSubmitting(false);
 
     if (error) {
-      setSubmitError('Não foi possível registrar a notificação. Tente novamente.');
+      setSubmitError('Não foi possível enviar o aviso. Tente novamente.');
       return;
     }
 
@@ -174,7 +174,10 @@ function PublicBikePage() {
     return (
       <div className="max-w-md mx-auto p-5">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <h2 className="font-bold text-slate-800 text-sm mb-3">Notificação enviada</h2>
+          <h2 className="font-bold text-slate-800 text-sm mb-1">Aviso enviado à administração</h2>
+          <p className="text-xs text-slate-500 mb-3">
+            A administração vai entrar em contato com o dono da bike. Resumo do aviso:
+          </p>
           <div className="text-xs text-slate-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
             <p>
               Olá, <strong>{whatsappPreview.ownerFirstName}</strong>! Sua bicicleta elétrica{' '}
@@ -236,10 +239,10 @@ function PublicBikePage() {
 
         <div className="p-5">
           <h3 className="font-bold text-slate-800 text-sm mb-1">
-            Notificar proprietário sobre esta bike
+            Avisar a administração sobre esta bike
           </h3>
           <p className="text-xs text-slate-500 mb-4">
-            Selecione o motivo abaixo para enviar um alerta automático e discreto ao dono:
+            Escolha o motivo abaixo. A administração recebe o aviso e entra em contato com o dono:
           </p>
 
           <div className="space-y-2 mb-4">
@@ -301,7 +304,7 @@ function PublicBikePage() {
             className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
           >
             <Send className="w-4 h-4" />
-            <span>{submitting ? 'Enviando...' : 'Enviar Notificação ao Proprietário'}</span>
+            <span>{submitting ? 'Enviando...' : 'Enviar Aviso à Administração'}</span>
           </button>
         </div>
       </div>

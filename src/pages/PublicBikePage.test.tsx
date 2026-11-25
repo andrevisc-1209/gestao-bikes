@@ -55,7 +55,7 @@ describe('PublicBikePage', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByText(/notificar proprietário sobre esta bike/i)).toBeInTheDocument();
+      expect(screen.getByText(/avisar a administração sobre esta bike/i)).toBeInTheDocument();
     });
 
     expect(screen.getByText(/clique para anexar uma foto do problema/i)).toBeInTheDocument();
@@ -80,14 +80,14 @@ describe('PublicBikePage', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByText(/notificar proprietário sobre esta bike/i)).toBeInTheDocument();
+      expect(screen.getByText(/avisar a administração sobre esta bike/i)).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText(/pneu murcho/i));
-    fireEvent.click(screen.getByRole('button', { name: /enviar notificação ao proprietário/i }));
+    fireEvent.click(screen.getByRole('button', { name: /enviar aviso à administração/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/notificação enviada/i)).toBeInTheDocument();
+      expect(screen.getByText(/aviso enviado à administração/i)).toBeInTheDocument();
     });
 
     expect(screen.getByText(/pode fechar esta página/i)).toBeInTheDocument();
