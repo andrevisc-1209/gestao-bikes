@@ -132,7 +132,7 @@ function AdminPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8 space-y-6">
+      <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8 space-y-6 print:p-0 print:max-w-none">
         <div className="print:hidden">
           <KpiCards
             activeCount={kpiCounts.activeCount}
