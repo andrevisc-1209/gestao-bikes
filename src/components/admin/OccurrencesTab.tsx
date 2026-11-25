@@ -1,5 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Check, CheckCircle } from 'lucide-react';
+import {
+  EMPTY_FILTERS,
+  filterIncidents,
+  hasActiveFilters,
+  repeatBikes,
+  type IncidentFilters,
+} from '../../lib/incidentFilters';
+import IncidentFiltersBar from './IncidentFiltersBar';
 import { supabase } from '../../lib/supabase';
 import { safeHttpUrl } from '../../lib/safeUrl';
 import { formatPhoneForDisplay } from '../../lib/phone';
@@ -60,6 +68,19 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
   const [viewingBike, setViewingBike] = useState<Bike | null>(null);
   const [viewError, setViewError] = useState<string | null>(null);
   const [viewingIncident, setViewingIncident] = useState<IncidentWithBike | null>(null);
+  const [filters, setFilters] = useState<IncidentFilters>(EMPTY_FILTERS);
+
+  const filtered = useMemo(() => filterIncidents(incidents, filters), [incidents, filters]);
+  const reasons = useMemo(
+    () => [...new Set(incidents.map((i) => i.reason))].sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [incidents],
+  );
+  // Repeat offenders within the chosen period/status/reason, ignoring the
+  // search box, so clicking one of them does not make the others disappear.
+  const repeats = useMemo(
+    () => repeatBikes(filterIncidents(incidents, { ...filters, search: '' })),
+    [incidents, filters],
+  );
 
   async function loadIncidents() {
     setLoading(true);
@@ -95,11 +116,22 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
     return <p className="text-xs text-slate-400 p-5">Carregando ocorrências...</p>;
   }
 
-  const openIncidents = incidents.filter((i) => i.status === 'open');
-  const resolvedIncidents = incidents.filter((i) => i.status === 'resolved');
+  const openIncidents = filtered.filter((i) => i.status === 'open');
+  const resolvedIncidents = filtered.filter((i) => i.status === 'resolved');
+  const filtering = hasActiveFilters(filters);
 
   return (
     <div className="space-y-6">
+      <IncidentFiltersBar
+        filters={filters}
+        onChange={setFilters}
+        reasons={reasons}
+        repeatBikes={repeats}
+        shown={filtered.length}
+        total={incidents.length}
+      />
+
+      {filters.status !== 'resolved' && (
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -107,6 +139,9 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
             <h2 className="font-bold text-slate-800 text-sm sm:text-base">
               Ocorrências Reportadas pelo QR Code
             </h2>
+            <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">
+              {openIncidents.length}
+            </span>
           </div>
           <span className="text-xs text-slate-400">Tempo real</span>
         </div>
@@ -117,7 +152,9 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
           {openIncidents.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
               <CheckCircle className="w-8 h-8 mx-auto mb-2 text-emerald-500/70" />
-              <p className="text-xs font-semibold text-slate-600">Nenhuma ocorrência em aberto</p>
+              <p className="text-xs font-semibold text-slate-600">
+                {filtering ? 'Nenhuma ocorrência em aberto com esses filtros' : 'Nenhuma ocorrência em aberto'}
+              </p>
             </div>
           ) : (
             openIncidents.map((incident) => (
@@ -185,14 +222,21 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
           )}
         </div>
       </div>
+      )}
 
+      {filters.status !== 'open' && (
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
           <h2 className="font-bold text-slate-800 text-sm sm:text-base">Ocorrências Resolvidas</h2>
+          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+            {resolvedIncidents.length}
+          </span>
         </div>
         <div className="p-5 space-y-3">
           {resolvedIncidents.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">Nenhuma ocorrência resolvida ainda.</p>
+            <p className="text-xs text-slate-400 text-center py-4">
+              {filtering ? 'Nenhuma ocorrência resolvida com esses filtros.' : 'Nenhuma ocorrência resolvida ainda.'}
+            </p>
           ) : (
             resolvedIncidents.map((incident) => (
               <div
@@ -208,15 +252,21 @@ function OccurrencesTab({ onResolved = () => {} }: OccurrencesTabProps) {
                     <span className="text-xs font-bold text-slate-800">
                       {incident.bikes?.unit_block ?? ''}
                     </span>
+                    <span className="text-[11px] text-slate-400">
+                      • {formatTimestamp(incident.created_at)}
+                    </span>
                   </div>
                   <p className="text-xs font-semibold text-slate-600">{incident.reason}</p>
                 </div>
-                <span className="text-[11px] text-emerald-600 font-semibold">Resolvida</span>
+                <span className="text-[11px] text-emerald-600 font-semibold">
+                  Resolvida{incident.resolved_at ? ` em ${formatTimestamp(incident.resolved_at)}` : ''}
+                </span>
               </div>
             ))
           )}
         </div>
       </div>
+      )}
 
       {viewingIncident && (
         <IncidentDetailModal incident={viewingIncident} onClose={() => setViewingIncident(null)} />
