@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { CheckCircle, Tag, X } from 'lucide-react';
+import { Ban, CheckCircle, Tag, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { safeHttpUrl } from '../../lib/safeUrl';
 import type { Bike } from '../../types/database';
 import BikeDetailModal from './BikeDetailModal';
+import RejectBikeModal from './RejectBikeModal';
 
 interface ApprovalsTabProps {
   onApproved: () => void;
@@ -19,6 +20,7 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
     null
   );
   const [viewingBike, setViewingBike] = useState<Bike | null>(null);
+  const [rejectingBike, setRejectingBike] = useState<Bike | null>(null);
 
   async function loadPendingBikes() {
     setLoading(true);
@@ -111,6 +113,19 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
                   </div>
                 </div>
                 <div className="shrink-0 flex flex-col items-end gap-1.5">
+                  <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setRejectingBike(bike);
+                    }}
+                    disabled={approvingId === bike.id}
+                    className="shrink-0 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    <Ban className="w-3.5 h-3.5" />
+                    <span>Recusar</span>
+                  </button>
                   <button
                     type="button"
                     onClick={(event) => {
@@ -123,6 +138,7 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
                     <Tag className="w-3.5 h-3.5" />
                     <span>{approvingId === bike.id ? 'Atribuindo...' : 'Atribuir Adesivo'}</span>
                   </button>
+                  </div>
                   {approveError?.bikeId === bike.id && (
                     <p className="text-[11px] font-semibold text-rose-600 text-right">
                       {approveError.message}
@@ -161,6 +177,20 @@ function ApprovalsTab({ onApproved }: ApprovalsTabProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {rejectingBike && (
+        <RejectBikeModal
+          bike={rejectingBike}
+          onClose={() => setRejectingBike(null)}
+          onRejected={() => {
+            // Drop it from the queue in place: reloading would swap the tab
+            // for its loading state and close the modal before the admin
+            // sees the WhatsApp button.
+            setPendingBikes((bikes) => bikes.filter((b) => b.id !== rejectingBike.id));
+            onApproved();
+          }}
+        />
       )}
 
       {viewingBike && (

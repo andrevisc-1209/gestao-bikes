@@ -33,7 +33,7 @@ function FleetTab({ currentCapacity = 0, settingsId, onCapacityChanged = () => {
     setLoading(true);
     const { data } = await supabase.from('bikes').select('*').order('tag_number');
     const fetched = (data as FleetBike[] | null) ?? [];
-    setBikes(fetched.filter((bike) => bike.status !== 'pending'));
+    setBikes(fetched.filter((bike) => bike.status === 'active' || bike.status === 'inactive'));
     setLoading(false);
   }
 

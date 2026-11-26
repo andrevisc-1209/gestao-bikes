@@ -97,4 +97,38 @@ describe('ApprovalsTab', () => {
       expect(screen.getByText(/cadastrado em/i)).toBeInTheDocument();
     });
   });
+
+  it('rejects a pending bike with a reason and offers a WhatsApp notice', async () => {
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
+    const onApproved = vi.fn();
+    render(<ApprovalsTab onApproved={onApproved} />);
+    await waitFor(() => screen.getByText(/Bloco A/));
+    fireEvent.click(screen.getByRole('button', { name: /recusar/i }));
+    fireEvent.change(screen.getByLabelText('Motivo'), { target: { value: 'Cadastro duplicado' } });
+    fireEvent.change(screen.getByLabelText(/observação/i), { target: { value: 'já existe' } });
+    fireEvent.click(screen.getByRole('button', { name: /confirmar recusa/i }));
+
+    await waitFor(() =>
+      expect(rpcMock).toHaveBeenCalledWith('reject_bike', {
+        p_bike_id: 'b1',
+        p_reason: 'Cadastro duplicado',
+        p_notes: 'já existe',
+      }),
+    );
+    expect(await screen.findByText('Cadastro recusado')).toBeInTheDocument();
+    expect(onApproved).toHaveBeenCalled();
+    const link = screen.getByRole('link', { name: /avisar morador no whatsapp/i });
+    expect(link.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/5511999999999\?text=/);
+    expect(decodeURIComponent(link.getAttribute('href') ?? '')).toContain('Motivo: Cadastro duplicado (já existe).');
+  });
+
+  it('keeps the reject form open with the error when reject_bike fails', async () => {
+    rpcMock.mockResolvedValueOnce({ data: null, error: { message: 'Este cadastro não está mais pendente.' } });
+    render(<ApprovalsTab onApproved={() => {}} />);
+    await waitFor(() => screen.getByText(/Bloco A/));
+    fireEvent.click(screen.getByRole('button', { name: /recusar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /confirmar recusa/i }));
+    expect(await screen.findByText('Este cadastro não está mais pendente.')).toBeInTheDocument();
+    expect(screen.queryByText('Cadastro recusado')).not.toBeInTheDocument();
+  });
 });

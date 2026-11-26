@@ -7,7 +7,7 @@ create extension if not exists "pgcrypto";
 
 -- 2. Enums --------------------------------------------------------------------
 
-create type bike_status as enum ('pending', 'active', 'inactive');
+create type bike_status as enum ('pending', 'active', 'inactive', 'rejected');
 create type incident_status as enum ('open', 'resolved');
 
 -- 3. Tables -------------------------------------------------------------------
@@ -80,7 +80,7 @@ create table bikes_history (
   created_at timestamptz not null,
   edited_at timestamptz not null default now(),
   edited_by uuid references auth.users(id),
-  action text not null default 'edit' check (action in ('edit', 'deactivate')),
+  action text not null default 'edit' check (action in ('edit', 'deactivate', 'reject')),
   reason text,
   notes text
 );
@@ -416,3 +416,46 @@ $$;
 revoke execute on function deactivate_bike(uuid,text,text) from public;
 revoke execute on function deactivate_bike(uuid,text,text) from anon;
 grant execute on function deactivate_bike(uuid,text,text) to authenticated;
+
+
+-- Rejects a pending bike and snapshots it into bikes_history, as one atomic
+-- statement. Only pending bikes can be rejected: an approved, inactive or
+-- already rejected bike makes the update affect zero rows, so nothing is
+-- written and the function raises. A double click is therefore harmless.
+create or replace function reject_bike(
+  p_bike_id uuid,
+  p_reason text,
+  p_notes text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.role() != 'authenticated' then
+    raise exception 'not authorized';
+  end if;
+
+  with updated as (
+    update bikes set status = 'rejected'
+    where id = p_bike_id and status = 'pending'
+    returning *
+  )
+  insert into bikes_history (
+    bike_id, tag_number, unit_block, owner_name, owner_whatsapp,
+    brand_model, color, photo_url, status, created_at, action, reason, notes, edited_by
+  )
+  select id, tag_number, unit_block, owner_name, owner_whatsapp,
+         brand_model, color, photo_url, status, created_at, 'reject', p_reason, p_notes, auth.uid()
+  from updated;
+
+  if not found then
+    raise exception 'Este cadastro não está mais pendente.';
+  end if;
+end;
+$$;
+
+revoke execute on function reject_bike(uuid,text,text) from public;
+revoke execute on function reject_bike(uuid,text,text) from anon;
+grant execute on function reject_bike(uuid,text,text) to authenticated;
