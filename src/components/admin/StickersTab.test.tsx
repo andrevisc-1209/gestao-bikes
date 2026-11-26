@@ -28,31 +28,31 @@ const available = (n: number) =>
   Array.from({ length: n }, (_, i) => sticker(String(i + 1).padStart(3, '0')));
 
 describe('StickersTab', () => {
-  it('generates whole A4 sheets (12 stickers each) and refetches', async () => {
-    rpcMock.mockResolvedValueOnce({ data: 24, error: null });
+  it('generates whole A4 sheets (18 stickers each) and refetches', async () => {
+    rpcMock.mockResolvedValueOnce({ data: 36, error: null });
     render(<StickersTab />);
     await waitFor(() => expect(selectMock).toHaveBeenCalledTimes(1));
 
     fireEvent.change(screen.getByLabelText(/folhas a4/i), { target: { value: '2' } });
-    expect(screen.getByText(/= 24 adesivos \(12 por folha\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/= 36 adesivos \(18 por folha\)/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /gerar lote/i }));
 
-    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith('generate_sticker_batch', { p_count: 24 }));
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith('generate_sticker_batch', { p_count: 36 }));
     await waitFor(() => expect(selectMock).toHaveBeenCalledTimes(2));
     await waitFor(() =>
       expect(
-        screen.getByText(/24 adesivos gerados com sucesso \(2 folhas A4\)\./i)
+        screen.getByText(/36 adesivos gerados com sucesso \(2 folhas A4\)\./i)
       ).toBeInTheDocument()
     );
   });
 
-  it('defaults to one sheet of 12 stickers', async () => {
+  it('defaults to one sheet of 18 stickers', async () => {
     rpcMock.mockClear();
     render(<StickersTab />);
     await waitFor(() => expect(selectMock).toHaveBeenCalled());
 
     fireEvent.click(screen.getByRole('button', { name: /gerar lote/i }));
-    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith('generate_sticker_batch', { p_count: 12 }));
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith('generate_sticker_batch', { p_count: 18 }));
   });
 
   it('disables generation for a non-whole or zero sheet count', async () => {
@@ -74,7 +74,7 @@ describe('StickersTab', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/3 de 12 adesivos gerados \(alguns números já existiam e foram ignorados\)\./i)
+        screen.getByText(/3 de 18 adesivos gerados \(alguns números já existiam e foram ignorados\)\./i)
       ).toBeInTheDocument()
     );
   });
@@ -93,18 +93,18 @@ describe('StickersTab', () => {
     expect(screen.queryByText('BIKE #007')).not.toBeInTheDocument();
   });
 
-  it('splits the reserve into A4 sheets of 12', async () => {
-    selectMock.mockResolvedValueOnce({ data: available(13), error: null });
+  it('splits the reserve into A4 sheets of 18', async () => {
+    selectMock.mockResolvedValueOnce({ data: available(19), error: null });
 
     const { container } = render(<StickersTab />);
 
-    await waitFor(() => expect(screen.getByText('BIKE #013')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('BIKE #019')).toBeInTheDocument());
     const sheets = container.querySelectorAll('.sticker-sheet');
     expect(sheets).toHaveLength(2);
-    expect(sheets[0].querySelectorAll('.sticker-print-card')).toHaveLength(12);
+    expect(sheets[0].querySelectorAll('.sticker-print-card')).toHaveLength(18);
     expect(sheets[1].querySelectorAll('.sticker-print-card')).toHaveLength(1);
-    expect(screen.getByText(/13 da reserva · 2 folhas A4/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /imprimir reserva \(13\)/i })).toBeEnabled();
+    expect(screen.getByText(/19 da reserva · 2 folhas A4/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /imprimir reserva \(19\)/i })).toBeEnabled();
   });
 
   it('shows each sticker status, including bikes numbered before the pool', async () => {
