@@ -12,9 +12,9 @@ import {
   type StickerState,
 } from "../../lib/stickerSelection";
 
-// An A4 sheet holds 2 columns x 6 rows of 8 x 4 cm stickers (see the print
+// An A4 sheet holds 3 columns x 6 rows of 5 x 4 cm stickers (see the print
 // rules in index.css). Batches are generated in whole sheets so none is wasted.
-export const STICKERS_PER_SHEET = 12;
+export const STICKERS_PER_SHEET = 18;
 
 function chunkIntoSheets<T>(items: T[]): T[][] {
   const sheets: T[][] = [];
@@ -197,7 +197,7 @@ function StickersTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print:space-y-0">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print:hidden">
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -401,7 +401,7 @@ function StickersTab() {
             <p className="text-[11px] text-slate-500 mt-0.5">
               {printRows.length === 0
                 ? "Nada para imprimir"
-                : `${selected.size > 0 ? `${printRows.length} selecionados` : `${printRows.length} da reserva`} · ${sheetsLabel(printRows.length)} · ${STICKERS_PER_SHEET} adesivos de 8 × 4 cm por folha`}
+                : `${selected.size > 0 ? `${printRows.length} selecionados` : `${printRows.length} da reserva`} · ${sheetsLabel(printRows.length)} · ${STICKERS_PER_SHEET} adesivos de 5 × 4 cm por folha`}
             </p>
           </div>
           <button
@@ -427,31 +427,25 @@ function StickersTab() {
           ) : (
             <div className="space-y-4 print:space-y-0">
               {sheets.map((sheet, sheetIndex) => (
-                <div key={sheetIndex} className="sticker-sheet grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div key={sheetIndex} className="sticker-sheet grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
                   {sheet.map((sticker) => (
                     <div
                       key={sticker.tag_number}
-                      className="sticker-print-card bg-slate-900 rounded-2xl p-4 text-white border-2 border-slate-700 shadow-inner relative overflow-hidden flex items-center justify-between gap-3"
+                      className="sticker-print-card aspect-[5/4] bg-slate-900 rounded-xl p-2 text-white border-2 border-slate-700 overflow-hidden flex flex-col items-center justify-between text-center"
                     >
-                      <div>
-                        <p className="text-[9px] uppercase tracking-widest text-emerald-400 font-bold">
-                          Patrimônio Condomínio
-                        </p>
-                        <p className="text-2xl font-black tracking-tight mt-0.5">
-                          BIKE #{sticker.tag_number}
-                        </p>
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          Escaneie para notificar
-                          <br />
-                          ou verificar regularidade
-                        </p>
-                      </div>
-                      <div className="bg-white p-2 rounded-xl shrink-0">
+                      <p className="sticker-label text-[7px] uppercase tracking-widest text-emerald-400 font-bold leading-none">
+                        Patrimônio Condomínio
+                      </p>
+                      <div className="sticker-qr-box bg-white p-1 rounded-md">
                         <QRCodeSVG
                           className="sticker-qr"
                           value={`${window.location.origin}${window.location.pathname}#/b/${sticker.tag_number}`}
-                          size={64}
+                          size={56}
                         />
+                      </div>
+                      <div className="leading-none">
+                        <p className="sticker-tag text-sm font-black tracking-tight">BIKE #{sticker.tag_number}</p>
+                        <p className="sticker-hint text-[7px] text-slate-400 mt-0.5">Escaneie para notificar</p>
                       </div>
                     </div>
                   ))}

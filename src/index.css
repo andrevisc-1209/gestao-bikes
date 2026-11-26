@@ -12,16 +12,17 @@ body {
     margin: 10mm;
   }
 
-  /* One A4 page per sheet: 2 columns x 6 rows of 8 x 4 cm stickers with a
-     5 mm gap for cutting (165 x 265 mm, inside the 190 x 277 mm print area).
+  /* One A4 page per sheet: 3 columns x 6 rows of 5 x 4 cm stickers with a
+     4-5 mm gap for cutting (160 x 260 mm, inside the 190 x 277 mm print area).
      The doubled class outranks the responsive grid-cols utilities, which
      Tailwind emits after this file's rules. */
   .sticker-sheet.sticker-sheet {
     display: grid;
-    grid-template-columns: repeat(2, 80mm);
+    grid-template-columns: repeat(3, 50mm);
     grid-auto-rows: 40mm;
-    gap: 5mm;
+    gap: 4mm 5mm;
     justify-content: center;
+    margin: 0;
     break-after: page;
   }
 
@@ -29,18 +30,36 @@ body {
     break-after: auto;
   }
 
-  .sticker-print-card {
-    width: 80mm;
+  .sticker-print-card.sticker-print-card {
+    width: 50mm;
     height: 40mm;
-    padding: 4mm;
+    padding: 2.5mm;
+    border-radius: 3mm;
     box-sizing: border-box;
     break-inside: avoid;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
+  .sticker-label {
+    font-size: 5.5pt;
+  }
+
+  .sticker-qr-box {
+    padding: 1.2mm;
+  }
+
   .sticker-qr {
-    width: 25mm;
-    height: 25mm;
+    width: 20mm;
+    height: 20mm;
+  }
+
+  .sticker-tag.sticker-tag {
+    font-size: 13pt;
+  }
+
+  .sticker-hint.sticker-hint {
+    font-size: 5.5pt;
+    margin-top: 0.6mm;
   }
 }
