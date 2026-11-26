@@ -36,6 +36,15 @@ export const COLOR_OPTIONS = ['Preta', 'Branca', 'Prata', 'Vermelha', 'Azul', 'V
 
 export const DEACTIVATION_REASONS = ['Mudança de endereço', 'Roubo/Furto', 'Perda', 'Venda da bicicleta', 'Outro'];
 
+export const REJECTION_REASONS = [
+  'Foto ilegível ou sem a bike',
+  'Dados incompletos ou errados',
+  'Morador não identificado no apartamento',
+  'Cadastro duplicado',
+  'Bike não é elétrica',
+  'Outro',
+];
+
 export const INCIDENT_RESOLUTION_REASONS = [
   'Bike retirada do local',
   'Morador contatado e resolveu',

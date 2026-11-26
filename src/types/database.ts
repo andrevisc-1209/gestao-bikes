@@ -1,4 +1,4 @@
-export type BikeStatus = 'pending' | 'active' | 'inactive';
+export type BikeStatus = 'pending' | 'active' | 'inactive' | 'rejected';
 export type IncidentStatus = 'open' | 'resolved';
 
 export interface CondoSettings {
