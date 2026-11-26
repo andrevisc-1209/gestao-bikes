@@ -46,13 +46,13 @@ describe('StickersTab', () => {
     );
   });
 
-  it('defaults to one sheet of 18 stickers', async () => {
+  it('defaults to four sheets (72 stickers)', async () => {
     rpcMock.mockClear();
     render(<StickersTab />);
     await waitFor(() => expect(selectMock).toHaveBeenCalled());
 
     fireEvent.click(screen.getByRole('button', { name: /gerar lote/i }));
-    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith('generate_sticker_batch', { p_count: 18 }));
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith('generate_sticker_batch', { p_count: 72 }));
   });
 
   it('disables generation for a non-whole or zero sheet count', async () => {
@@ -74,7 +74,7 @@ describe('StickersTab', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/3 de 18 adesivos gerados \(alguns números já existiam e foram ignorados\)\./i)
+        screen.getByText(/3 de 72 adesivos gerados \(alguns números já existiam e foram ignorados\)\./i)
       ).toBeInTheDocument()
     );
   });

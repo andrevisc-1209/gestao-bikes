@@ -59,7 +59,7 @@ const FILTERS: { id: Filter; label: string }[] = [
 function StickersTab() {
   const [rows, setRows] = useState<StickerRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sheetCount, setSheetCount] = useState(1);
+  const [sheetCount, setSheetCount] = useState(4);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [generateMessage, setGenerateMessage] = useState<string | null>(null);
